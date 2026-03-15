@@ -504,6 +504,57 @@ function selectDate(id, iso) {
   dpState[id].value = iso;
   const disp = $(id)?.querySelector('.date-display');
   if(disp) { disp.innerHTML = isoToDE(iso)+' <span class="date-cal-icon">📅</span>'; disp.classList.remove('placeholder'); }
+  onDateSelected(id, iso);
+}
+
+// Smart cascade: selecting one date auto-suggests the next
+function onDateSelected(id, iso) {
+  // Hin-/Rückflug: Hinflug gesetzt → Rückflug = Hinflug + 7 (wenn noch leer oder davor)
+  if(id==='di-rt-dep') {
+    const retPicker = dpState['di-rt-ret'];
+    if(retPicker && (!retPicker.value || retPicker.value <= iso)) {
+      const suggested = plus(new Date(iso), 7).toISOString().split('T')[0];
+      selectDate('di-rt-ret', suggested);
+      if(dpState['di-rt-ret']) dpState['di-rt-ret'].minIso = iso;
+    }
+  }
+  // Trip-Planer Start → alle Stopp-Daten cascadieren
+  if(id==='di-mc-start') {
+    let base = iso;
+    for(let n=1; n<=segN; n++) {
+      const sid='di-sf'+n;
+      if(dpState[sid]) {
+        base = plus(new Date(base), 3).toISOString().split('T')[0];
+        if(!dpState[sid].value || dpState[sid].value < iso)
+          selectDate(sid, base);
+        dpState[sid].minIso = iso;
+      }
+    }
+    const endPicker = dpState['di-mc-end'];
+    if(endPicker && (!endPicker.value || endPicker.value <= iso)) {
+      const suggested = plus(new Date(base), 3).toISOString().split('T')[0];
+      selectDate('di-mc-end', suggested);
+      dpState['di-mc-end'].minIso = iso;
+    }
+  }
+  // Stopp-Datum gesetzt → nächsten Stopp + 3 Tage, End-Datum anpassen
+  if(id.startsWith('di-sf')) {
+    const n = parseInt(id.replace('di-sf',''));
+    const nextSid = 'di-sf'+(n+1);
+    if(dpState[nextSid]) {
+      const suggested = plus(new Date(iso), 3).toISOString().split('T')[0];
+      if(!dpState[nextSid].value || dpState[nextSid].value <= iso) {
+        selectDate(nextSid, suggested);
+        dpState[nextSid].minIso = iso;
+      }
+    }
+    const endPicker = dpState['di-mc-end'];
+    if(endPicker && endPicker.value <= iso) {
+      const suggested = plus(new Date(iso), 3).toISOString().split('T')[0];
+      selectDate('di-mc-end', suggested);
+      dpState['di-mc-end'].minIso = iso;
+    }
+  }
 }
 
 function getDate(id) { return dpState[id]?.value || ''; }
@@ -616,8 +667,15 @@ function addSeg(){
       <div class="field"><label>Ankunft frühestens</label><div class="date-input" id="di-sf${n}"><div class="date-display placeholder" tabindex="0">TT.MM.JJJJ <span class="date-cal-icon">📅</span></div></div></div>
     </div>`;
   $('seg-container').appendChild(div);
-  const todayIso=new Date().toISOString().split('T')[0];
-  initDatepicker('di-sf'+n, '', todayIso);
+  // Vorschlag: letzter bekannter Stopp + 3 Tage, sonst Startdatum + n*3 Tage
+  const startIso = getDate('di-mc-start') || new Date().toISOString().split('T')[0];
+  let suggestIso = startIso;
+  for(let i=n-1; i>=1; i--) {
+    const prev = getDate('di-sf'+i);
+    if(prev) { suggestIso = plus(new Date(prev), 3).toISOString().split('T')[0]; break; }
+  }
+  if(suggestIso === startIso) suggestIso = plus(new Date(startIso), n*3).toISOString().split('T')[0];
+  initDatepicker('di-sf'+n, suggestIso, startIso);
   const rm=div.querySelector('.remove-seg');
   if(rm) rm.addEventListener('click',()=>div.remove());
 }
@@ -658,12 +716,14 @@ async function doSearch(){
   setSearching(true); hideRes();
 
   try {
-    const qs=new URLSearchParams({engine:'google_flights',api_key:st.serpKey,...params}).toString();
+    // _legs ist internes Metadaten-Feld – nicht an API senden
+    const {_legs, ...apiParams} = params;
+    const qs=new URLSearchParams({engine:'google_flights',api_key:st.serpKey,...apiParams}).toString();
     const res=await fetch(`${st.proxyUrl}?${qs}`);
     if(!res.ok){ let m=`HTTP ${res.status}`; try{const j=await res.json();m=j.error||m;}catch{} throw new Error(m); }
     const data=await res.json();
 
-    if(st.tab==='mc') renderTripResults(data, params._legs);
+    if(st.tab==='mc') renderTripResults(data, _legs);
     else              renderResults(data);
   } catch(err){ renderErr(`Fehler: ${err.message}`); }
 
@@ -693,7 +753,7 @@ function buildParams(){
       ...($('rt-stops').value!==''&&{stops:$('rt-stops').value})};
   }
 
-  // Trip-Planer: baut Legs für SerpAPI type=3 multi-city
+  // Trip-Planer: SerpAPI type=3 erfordert multi_city_json
   const origin=$('mc-origin').value.trim();
   const dest  =($('mc-dest').value.trim()||origin);
   const start =getDate('di-mc-start');
@@ -705,21 +765,30 @@ function buildParams(){
     const n=s.id.replace('seg-','');
     const city=$('sf'+n)?.value.trim();
     const date=getDate('di-sf'+n);
-    if(city) stops.push({city,date:date||start});
+    if(city) stops.push({city, date: date||start});
   });
   if(!stops.length){alert('Bitte mindestens einen Zwischenstopp angeben.');return null;}
 
-  // Build leg sequence: origin→stop1→stop2→…→dest
-  const legs=[{f:origin,t:stops[0].city,d:start}];
-  for(let i=0;i<stops.length-1;i++) legs.push({f:stops[i].city,t:stops[i+1].city,d:stops[i].date||start});
-  legs.push({f:stops[stops.length-1].city,t:dest,d:stops[stops.length-1].date||end});
+  // Leg-Sequenz: Heimat → Stopp1 → … → Heimat/Ziel
+  const legs=[{f:origin, t:stops[0].city, d:start}];
+  for(let i=0;i<stops.length-1;i++)
+    legs.push({f:stops[i].city, t:stops[i+1].city, d:stops[i].date||start});
+  legs.push({f:stops[stops.length-1].city, t:dest, d:stops[stops.length-1].date||end});
 
-  return {...base,type:'3',
-    departure_id:legs.map(l=>l.f).join(','),
-    arrival_id:legs.map(l=>l.t).join(','),
-    outbound_date:legs.map(l=>l.d).join(','),
-    adults:$('mc-pax').value,travel_class:$('mc-class').value,
-    _legs:legs}; // internal use
+  // SerpAPI multi_city_json: JSON-Array [{departure_id, arrival_id, date}, ...]
+  const multiCityJson=JSON.stringify(legs.map(l=>({
+    departure_id: l.f,
+    arrival_id:   l.t,
+    date:         l.d,
+  })));
+
+  return {...base,
+    type:'3',
+    multi_city_json: multiCityJson,
+    adults:$('mc-pax').value,
+    travel_class:$('mc-class').value,
+    _legs:legs,
+  };
 }
 
 /* ══════════════════════════════════════════════════════════
