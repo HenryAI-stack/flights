@@ -477,7 +477,7 @@ const AIRPORTS = [
   {iata:'LGA',name:'New York LaGuardia',city:'New York'},
   {iata:'LAX',name:'Los Angeles',city:'Los Angeles'},
   {iata:'SFO',name:'San Francisco',city:'San Francisco'},
-  {iata:'ORD',name:'Chicago O'Hare',city:'Chicago'},
+  {iata:'ORD',name:'Chicago O\'Hare',city:'Chicago'},
   {iata:'MIA',name:'Miami',city:'Miami'},
   {iata:'DFW',name:'Dallas Fort Worth',city:'Dallas'},
   {iata:'ATL',name:'Atlanta Hartsfield',city:'Atlanta'},
@@ -558,8 +558,7 @@ const AIRPORTS = [
   {iata:'FLR',name:'Florenz Peretola',city:'Florenz'},
   {iata:'BRI',name:'Bari Karol Wojtyla',city:'Bari'},
   {iata:'TRN',name:'Turin Caselle',city:'Turin'},
-  {iata:'GVA',name:'Genf Cointrin',city:'Genf'},
-  {iata:'NCE',name:'Nizza Côte d'Azur',city:'Nizza'},
+  {iata:'NCE',name:'Nizza Côte d\'Azur',city:'Nizza'},
   {iata:'MRS',name:'Marseille Provence',city:'Marseille'},
   {iata:'LYS',name:'Lyon Saint-Exupéry',city:'Lyon'},
   {iata:'TLS',name:'Toulouse Blagnac',city:'Toulouse'},
@@ -818,102 +817,19 @@ function logout() {
 /* ══════════════════════════════════════════════════════════
    INIT
 ══════════════════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
-  const todayIso = new Date().toISOString().split('T')[0];
-  const plus7    = plus(new Date(),7).toISOString().split('T')[0];
-  const plus14   = plus(new Date(),14).toISOString().split('T')[0];
-
-  // Init datepickers
-  initDatepicker('di-ow-date', todayIso, todayIso);
-  initDatepicker('di-rt-dep',  todayIso, todayIso);
-  initDatepicker('di-rt-ret',  plus7,    todayIso);
-  initDatepicker('di-mc-start',todayIso, todayIso);
-  initDatepicker('di-mc-end',  plus14,   todayIso);
-
-  // Tabs – beim Wechsel Flughäfen synchron halten
-  document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
-    const prev = st.tab;
-    st.tab = b.dataset.tab;
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    b.classList.add('active');
-    document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
-    $('tab-'+st.tab).style.display='block';
-    syncAirports(prev, st.tab);
-    hideRes();
-  }));
-
-  document.querySelectorAll('.swap-btn[data-swap]').forEach(bindSwap);
-
-  // Airport-Sync zwischen Tabs
-  function syncAirports(from, to) {
-    const map = {
-      'ow': { from:'ow-from', to:'ow-to' },
-      'rt': { from:'rt-from', to:'rt-to' },
-      'mc': { from:'mc-origin', to:'mc-dest' },
-    };
-    const src = map[from], dst = map[to];
-    if(!src || !dst) return;
-    const fromVal = $(src.from)?.value || '';
-    const toVal   = $(src.to)?.value   || '';
-    if(fromVal && $(dst.from)) $(dst.from).value = fromVal;
-    if(toVal   && $(dst.to))   $(dst.to).value   = toVal;
-  }
-
-  // Autocomplete für alle Airport-Inputs aktivieren
-  const AIRPORT_INPUT_IDS = ['ow-from','ow-to','rt-from','rt-to','mc-origin','mc-dest'];
-  AIRPORT_INPUT_IDS.forEach(initAirportAC);
-
-  // Trip-planer: init 2 stops
-  addSeg(); addSeg();
-  $('add-seg-btn').addEventListener('click', addSeg);
-
-  // Modals
-  document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.style.display='none';}));
-  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).style.display='none'));
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay').forEach(m=>m.style.display='none');});
-
-  $('btn-settings').addEventListener('click', openSettings);
-  $('warn-btn').addEventListener('click', openSettings);
-  $('save-btn').addEventListener('click', saveSettings);
-  $('key-toggle').addEventListener('click',()=>{
-    const i=$('serp-key-input'); const s=i.type==='password';
-    i.type=s?'text':'password'; $('key-toggle').textContent=s?'Verbergen':'Anzeigen';
-  });
-  $('search-btn').addEventListener('click', doSearch);
-
-  document.querySelectorAll('.sort-btn').forEach(b=>b.addEventListener('click',()=>{
-    const sort=b.dataset.sort;
-    if(sort==='best'){
-      currentSort='best'; currentDir='asc';
-      document.querySelectorAll('.sort-btn').forEach(x=>{x.classList.remove('active');if(x.dataset.dir){x.dataset.dir='asc';x.textContent=x.textContent.replace('↓','↑');}});
-      b.classList.add('active');
-    } else if(currentSort===sort){
-      // Same button: toggle direction
-      currentDir = currentDir==='asc'?'desc':'asc';
-      const arrow = currentDir==='asc'?'↑':'↓';
-      const label = sort==='price'?'Preis':sort==='duration'?'Dauer':sort==='dep'?'Abflug':'Ankunft';
-      b.textContent=`${label} ${arrow}`;
-      b.dataset.dir=currentDir;
-    } else {
-      // New sort criterion
-      currentSort=sort; currentDir='asc';
-      document.querySelectorAll('.sort-btn').forEach(x=>{
-        x.classList.remove('active');
-        if(x.dataset.dir){
-          x.dataset.dir='asc';
-          const lbl=x.dataset.sort==='price'?'Preis':x.dataset.sort==='duration'?'Dauer':x.dataset.sort==='dep'?'Abflug':'Ankunft';
-          x.textContent=`${lbl} ↑`;
-        }
-      });
-      b.classList.add('active');
-      b.textContent=`${sort==='price'?'Preis':sort==='duration'?'Dauer':sort==='dep'?'Abflug':'Ankunft'} ↑`;
-    }
-    renderList();
-  }));
-
-  if(st.user) showUser(st.user);
-  $('warn-proxy').style.display='none';
-});
+function syncAirports(from, to) {
+  const map = {
+    'ow': { from:'ow-from', to:'ow-to' },
+    'rt': { from:'rt-from', to:'rt-to' },
+    'mc': { from:'mc-origin', to:'mc-dest' },
+  };
+  const src = map[from], dst = map[to];
+  if(!src || !dst) return;
+  const fromVal = $(src.from)?.value || '';
+  const toVal   = $(src.to)?.value   || '';
+  if(fromVal && $(dst.from)) $(dst.from).value = fromVal;
+  if(toVal   && $(dst.to))   $(dst.to).value   = toVal;
+}
 
 /* ══════════════════════════════════════════════════════════
    SWAP & SEGMENTS
@@ -949,7 +865,7 @@ function addSeg(){
   initDatepicker('di-sf'+n, suggestIso, startIso);
   const rm=div.querySelector('.remove-seg');
   if(rm) rm.addEventListener('click',()=>div.remove());
-  initSegAC(n);
+  initAirportAC('sf'+n);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1445,6 +1361,88 @@ function setSearching(on){
   $('search-btn').disabled=on;
   $('search-btn').innerHTML=on?'Suche läuft <span class="dots"><span></span><span></span><span></span></span>':'Flüge suchen';
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const todayIso = new Date().toISOString().split('T')[0];
+  const plus7    = plus(new Date(),7).toISOString().split('T')[0];
+  const plus14   = plus(new Date(),14).toISOString().split('T')[0];
+
+  // Init datepickers
+  initDatepicker('di-ow-date', todayIso, todayIso);
+  initDatepicker('di-rt-dep',  todayIso, todayIso);
+  initDatepicker('di-rt-ret',  plus7,    todayIso);
+  initDatepicker('di-mc-start',todayIso, todayIso);
+  initDatepicker('di-mc-end',  plus14,   todayIso);
+
+  // Tabs – beim Wechsel Flughäfen synchron halten
+  document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+    const prev = st.tab;
+    st.tab = b.dataset.tab;
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
+    $('tab-'+st.tab).style.display='block';
+    syncAirports(prev, st.tab);
+    hideRes();
+  }));
+
+  document.querySelectorAll('.swap-btn[data-swap]').forEach(bindSwap);
+
+  // Autocomplete für alle Airport-Inputs aktivieren
+  const AIRPORT_INPUT_IDS = ['ow-from','ow-to','rt-from','rt-to','mc-origin','mc-dest'];
+  AIRPORT_INPUT_IDS.forEach(initAirportAC);
+
+  // Trip-planer: init 2 stops
+  addSeg(); addSeg();
+  $('add-seg-btn').addEventListener('click', addSeg);
+
+  // Modals
+  document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.style.display='none';}));
+  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).style.display='none'));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay').forEach(m=>m.style.display='none');});
+
+  $('btn-settings').addEventListener('click', openSettings);
+  $('warn-btn').addEventListener('click', openSettings);
+  $('save-btn').addEventListener('click', saveSettings);
+  $('key-toggle').addEventListener('click',()=>{
+    const i=$('serp-key-input'); const s=i.type==='password';
+    i.type=s?'text':'password'; $('key-toggle').textContent=s?'Verbergen':'Anzeigen';
+  });
+  $('search-btn').addEventListener('click', doSearch);
+
+  document.querySelectorAll('.sort-btn').forEach(b=>b.addEventListener('click',()=>{
+    const sort=b.dataset.sort;
+    if(sort==='best'){
+      currentSort='best'; currentDir='asc';
+      document.querySelectorAll('.sort-btn').forEach(x=>{x.classList.remove('active');if(x.dataset.dir){x.dataset.dir='asc';x.textContent=x.textContent.replace('↓','↑');}});
+      b.classList.add('active');
+    } else if(currentSort===sort){
+      // Same button: toggle direction
+      currentDir = currentDir==='asc'?'desc':'asc';
+      const arrow = currentDir==='asc'?'↑':'↓';
+      const label = sort==='price'?'Preis':sort==='duration'?'Dauer':sort==='dep'?'Abflug':'Ankunft';
+      b.textContent=`${label} ${arrow}`;
+      b.dataset.dir=currentDir;
+    } else {
+      // New sort criterion
+      currentSort=sort; currentDir='asc';
+      document.querySelectorAll('.sort-btn').forEach(x=>{
+        x.classList.remove('active');
+        if(x.dataset.dir){
+          x.dataset.dir='asc';
+          const lbl=x.dataset.sort==='price'?'Preis':x.dataset.sort==='duration'?'Dauer':x.dataset.sort==='dep'?'Abflug':'Ankunft';
+          x.textContent=`${lbl} ↑`;
+        }
+      });
+      b.classList.add('active');
+      b.textContent=`${sort==='price'?'Preis':sort==='duration'?'Dauer':sort==='dep'?'Abflug':'Ankunft'} ↑`;
+    }
+    renderList();
+  }));
+
+  if(st.user) showUser(st.user);
+  $('warn-proxy').style.display='none';
+});
 </script>
 </body>
 </html>
