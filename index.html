@@ -173,11 +173,10 @@
     .btn-book:hover{background:var(--sky-dark)}
     .btn-book svg{flex-shrink:0}
 
-    /* trip planner result */
-    .trip-result{background:var(--surface);border:.5px solid var(--border);border-radius:12px;margin-bottom:12px;box-shadow:var(--sh)}
-    .trip-result-header{display:flex;align-items:center;justify-content:space-between;padding:12px 1.25rem;border-bottom:.5px solid var(--border);background:var(--sky-light)}
-    .trip-result-header .total{font-size:15px;font-weight:700;color:var(--sky)}
-    .trip-result-header .route{font-size:13px;color:#0047cc}
+    /* trip route bar – innerhalb .fcard, über den Legs */
+    .trip-route-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 1.25rem 8px;background:var(--sky-light);border-bottom:.5px solid rgba(26,109,255,.15);flex-wrap:wrap;gap:6px}
+    .trip-route-text{font-size:13px;font-weight:600;color:#0047cc}
+    .trip-route-dur{font-size:12px;color:var(--sky)}
     .no-res{text-align:center;padding:2.5rem;color:var(--text-2);font-size:14px}
     .no-res.err{color:#c0392b}
 
@@ -1297,7 +1296,6 @@ function renderResults(data){
 /* ── Trip-Planer Ergebnisse ───────────────────────────────── */
 function renderTripResults(data, legs){
   if(data.error){renderErr(data.error);return;}
-  // SerpAPI liefert für Multi-City die Legs in best_flights[0].flights[]
   const combos=[...(data.best_flights||[]),...(data.other_flights||[])];
   $('results').style.display='block';
 
@@ -1309,40 +1307,88 @@ function renderTripResults(data, legs){
 
   $('results-title').textContent=`${combos.length} Trip-Kombinationen gefunden`;
 
+  // SerpAPI Multi-City: jedes combo enthält alle Flug-Segmente in combo.flights[].
+  // Wir gruppieren sie in logische Legs anhand der übergebenen Leg-Definitionen.
   $('results-list').innerHTML=combos.slice(0,10).map(combo=>{
-    const allLegs=combo.flights||[];
-    const dur=combo.total_duration?`${Math.floor(combo.total_duration/60)}h ${combo.total_duration%60}min`:'';
-    const route=(legs||[]).map(l=>l.f).concat([legs?.[legs.length-1]?.t]).filter(Boolean).join(' → ');
+    const totalDur = combo.total_duration
+      ? `${Math.floor(combo.total_duration/60)}h ${combo.total_duration%60}min` : '';
+    const route = (legs||[]).map(l=>l.f).concat([legs?.[legs.length-1]?.t])
+      .filter(Boolean).join(' → ');
 
-    const legsHtml=allLegs.map((leg,i)=>{
-      const dep=leg.departure_airport||{}, arr=leg.arrival_airport||{};
-      const legDur=leg.duration?`${Math.floor(leg.duration/60)}h ${leg.duration%60}min`:'';
-      const airline=[leg.airline,leg.flight_number].filter(Boolean).join(' ')||'?';
-      const iata=leg.airline_logo?'':(leg.iata_code||(leg.flight_number?.match(/^([A-Z]{2})/)?.[1]||''));
-      const src=leg.airline_logo||(iata?logoUrl(iata):'');
-      const logo=src
-        ?`<img class="airline-logo" src="${esc(src)}" alt="${esc(leg.airline||'')}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="airline-fallback" style="display:none">${esc(airlineInitials(leg.airline||''))}</div>`
-        :`<div class="airline-fallback">${esc(airlineInitials(leg.airline||''))}</div>`;
-      return `<div class="fleg">
-        <div class="fcard-left">
-          ${logo}
-          <div>
-            <div class="fleg-label outbound">Leg ${i+1}</div>
-            <div class="ftimes">${esc(dep.time||'--:--')} <span class="farrow">→</span> ${esc(arr.time||'--:--')}${legDur?`<span class="fdur">${esc(legDur)}</span>`:''}</div>
-            <div class="fmeta">${esc(airline)} · ${esc(dep.id||'?')} → ${esc(arr.id||'?')}</div>
-          </div>
+    // Baue ein synthetisches "flight-object" pro Leg, damit legHtml() direkt nutzbar ist.
+    // SerpAPI liefert alle physischen Segmente flach in combo.flights[].
+    // Wir rekonstruieren die Legs anhand der _legs-Definitionen (Abflug→Ziel pro Schritt).
+    const rawSegs   = combo.flights  || [];
+    const rawLays   = combo.layovers || [];
+    const legDefs   = legs || [];
+
+    // Segmente den Legs zuordnen: ein Segment gehört zu Leg i wenn
+    // dep.id === legDefs[i].f  (Startflughafen des Legs)
+    let remaining = [...rawSegs];
+    let layRemaining = [...rawLays];
+
+    const legObjects = legDefs.map((ld, li) => {
+      const legSegs = [];
+      const legLays = [];
+      // Nimm alle Segmente bis wir den Zielflughafen erreichen
+      while(remaining.length) {
+        const seg = remaining[0];
+        legSegs.push(remaining.shift());
+        // Umstieg-Info mitnehmen wenn vorhanden
+        if(layRemaining.length && remaining.length) {
+          const lay = layRemaining[0];
+          // Layover gehört zum aktuellen Leg wenn wir noch nicht am Ziel sind
+          const nextSegDep = remaining[0]?.departure_airport?.id;
+          if(nextSegDep !== ld.t) {
+            legLays.push(layRemaining.shift());
+          } else {
+            layRemaining.shift(); // Layover zwischen Legs – überspringen
+          }
+        }
+        // Sind wir am Ziel dieses Legs angelangt?
+        const lastArr = legSegs[legSegs.length-1]?.arrival_airport?.id;
+        if(lastArr === ld.t) break;
+      }
+
+      // Gesamtdauer des Legs berechnen
+      const legTotalMin = legSegs.reduce((s,seg)=>s+(seg.duration||0),0)
+        + legLays.reduce((s,l)=>s+(l.duration||0),0);
+
+      // Synthetisches Objekt im Format das legHtml() erwartet
+      return {
+        flights:        legSegs,
+        layovers:       legLays,
+        total_duration: legTotalMin || null,
+        booking_token:  combo.booking_token || null,
+        price:          null, // Preis nur auf Combo-Ebene
+      };
+    });
+
+    // Fallback: wenn Leg-Zuordnung nicht klappt (z.B. keine _legs), zeige alle Segmente als ein Leg
+    const displayLegs = legObjects.some(l=>l.flights.length>0)
+      ? legObjects
+      : [{ flights: rawSegs, layovers: rawLays, total_duration: combo.total_duration, booking_token: combo.booking_token, price: null }];
+
+    const legLabels = ['1. Flug','2. Flug','3. Flug','4. Flug','5. Flug'];
+    const legsHtml = displayLegs
+      .filter(l => l.flights.length > 0)
+      .map((l, i) => legHtml(l, 'outbound', legLabels[i] || `Flug ${i+1}`))
+      .join('');
+
+    return `<div class="fcard">
+      <div class="fcard-legs">
+        <div class="trip-route-bar">
+          <span class="trip-route-text">${esc(route)}</span>
+          ${totalDur ? `<span class="trip-route-dur"><em>${esc(totalDur)} gesamt</em></span>` : ''}
         </div>
-      </div>`;
-    }).join('');
-
-    return `<div class="trip-result">
-      <div class="trip-result-header">
-        <span class="route">${esc(route)}${dur?` · <em>${esc(dur)} Gesamt</em>`:''}</span>
-        <span class="total">${combo.price?combo.price+' '+st.currency:'Preis anfragen'}</span>
+        ${legsHtml}
       </div>
-      <div class="fcard-legs">${legsHtml}</div>
       <div class="fcard-footer">
-        <div class="fprice">${combo.price?`<span class="amt">${combo.price} ${esc(st.currency)}</span><span class="pp">gesamt pro Person</span>`:'<span class="amt">Preis anfragen</span>'}</div>
+        <div class="fprice">
+          ${combo.price
+            ? `<span class="amt">${combo.price} ${esc(st.currency)}</span><span class="pp">gesamt pro Person</span>`
+            : '<span class="amt">Preis anfragen</span>'}
+        </div>
         <a class="btn-book" href="${esc(bookUrl(combo))}" target="_blank" rel="noopener">
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
