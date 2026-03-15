@@ -95,12 +95,22 @@
 
     /* results */
     .results{margin-top:1.5rem}
-    .results h3{font-size:15px;font-weight:600;margin-bottom:1rem}
+    .results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+    .results-header h3{font-size:15px;font-weight:600}
+    .sort-bar{display:flex;align-items:center;gap:4px}
+    .sort-label{font-size:12px;color:var(--text-2);margin-right:2px}
+    .sort-btn{padding:5px 10px;border:.5px solid var(--border-med);border-radius:6px;background:none;font-size:12px;color:var(--text-2);cursor:pointer;transition:all .15s}
+    .sort-btn:hover{background:var(--surface-2)}
+    .sort-btn.active{background:var(--sky);color:#fff;border-color:var(--sky);font-weight:500}
     .fcard{display:flex;align-items:center;justify-content:space-between;gap:1rem;background:var(--surface);border:.5px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-bottom:10px;box-shadow:var(--sh);transition:box-shadow .15s}
     .fcard:hover{box-shadow:var(--shm)}
+    .fcard-left{display:flex;align-items:center;gap:12px;min-width:0}
+    .airline-logo{width:36px;height:36px;border-radius:8px;border:.5px solid var(--border);object-fit:contain;background:#fff;flex-shrink:0;padding:3px}
+    .airline-fallback{width:36px;height:36px;border-radius:8px;border:.5px solid var(--border);background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--text-2);letter-spacing:.02em}
     .ftimes{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600}
     .farrow{color:var(--text-3);font-size:13px}
     .fmeta{font-size:12px;color:var(--text-2);margin-top:3px}
+    .fdur{font-style:italic;color:var(--text-3);font-size:12px}
     .ftag{display:inline-block;background:var(--sky-light);color:var(--sky);font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;margin-top:6px}
     .fprice{text-align:right;flex-shrink:0}
     .fprice .amt{font-size:17px;font-weight:700;color:var(--sky)}
@@ -307,7 +317,17 @@
 
   <!-- Ergebnisse -->
   <section class="results" id="results" style="display:none">
-    <h3 id="results-title"></h3>
+    <div class="results-header">
+      <h3 id="results-title"></h3>
+      <div class="sort-bar">
+        <span class="sort-label">Sortieren:</span>
+        <button class="sort-btn active" data-sort="best">Beste</button>
+        <button class="sort-btn" data-sort="price">Preis ↑</button>
+        <button class="sort-btn" data-sort="duration">Dauer ↑</button>
+        <button class="sort-btn" data-sort="dep">Abflug ↑</button>
+        <button class="sort-btn" data-sort="arr">Ankunft ↑</button>
+      </div>
+    </div>
     <div id="results-list"></div>
   </section>
 </div>
@@ -317,19 +337,20 @@
   <div class="modal">
     <h2>Einstellungen <button class="btn-x" data-close="settings-modal">×</button></h2>
 
-    <!-- Cloudflare Worker Setup -->
+    <!-- Proxy Info -->
     <div class="setup-box">
-      <h3>Cloudflare Worker einrichten (einmalig, kostenlos)</h3>
-      <ol class="setup-steps">
-        <li><span><a href="https://workers.cloudflare.com" target="_blank" rel="noopener">workers.cloudflare.com</a> → kostenlosen Account erstellen</span></li>
-        <li><span>"Create a Worker" → Inhalt von <code>worker.js</code> einfügen → <b>Deploy</b></span></li>
-        <li><span>Im Worker-Dashboard: <b>Settings → Variables</b> → <code>SERPAPI_KEY</code> = API-Key eintragen (als Secret)</span></li>
-        <li><span>Die angezeigte Worker-URL unten eintragen (<code>https://….workers.dev</code>)</span></li>
-      </ol>
-      <div class="field" style="margin-bottom:0">
-        <label for="proxy-url-input">Worker-URL</label>
-        <input type="text" id="proxy-url-input" placeholder="https://skysearch.IHR-NAME.workers.dev" style="width:100%;padding:10px 12px;background:var(--surface);border:.5px solid var(--border-med);border-radius:var(--r);font-size:13px;color:var(--text-1);outline:none"/>
+      <h3>Proxy-Konfiguration</h3>
+      <p style="font-size:12px;color:#0047cc;margin-bottom:12px">
+        Auf Cloudflare Pages wird automatisch <code>/api/flights</code> als Proxy verwendet.<br>
+        Für lokale Tests oder eigene Server hier die URL anpassen.
+      </p>
+      <div class="field" style="margin-bottom:8px">
+        <label for="proxy-url-input">Proxy-URL</label>
+        <input type="text" id="proxy-url-input" placeholder="/api/flights" style="width:100%;padding:10px 12px;background:var(--surface);border:.5px solid var(--border-med);border-radius:var(--r);font-size:13px;color:var(--text-1);outline:none"/>
       </div>
+      <p style="font-size:11px;color:var(--text-2)">
+        SerpAPI-Key als Secret hinterlegen: Cloudflare Dashboard → Pages → Ihr Projekt → <b>Settings → Environment Variables</b> → <code>SERPAPI_KEY</code>
+      </p>
     </div>
 
     <div class="field">
@@ -376,8 +397,13 @@
 const DEFAULT_KEY      = 'af4a185cedc89384ec952f878f548278c2fd932f3061d855c1772aa9debfe5f6';
 const GOOGLE_CLIENT_ID = '876959021639-11ms2ssqqpgs50anvcie56n7ljhqjsmr.apps.googleusercontent.com'; // eslint-disable-line
 
+// Proxy-URL: auf Cloudflare Pages läuft die Function unter /api/flights
+// auf der gleichen Domain – kein separater Worker nötig.
+// Manuell überschreibbar in den Einstellungen (für lokale Tests oder eigene Proxies).
+const AUTO_PROXY = window.location.origin + '/api/flights';
+
 const st = {
-  proxyUrl: localStorage.getItem('proxy_url')           || '',
+  proxyUrl: localStorage.getItem('proxy_url')           || AUTO_PROXY,
   serpKey:  localStorage.getItem('serpapi_key')          || DEFAULT_KEY,
   currency: localStorage.getItem('currency')             || 'EUR',
   lang:     localStorage.getItem('lang')                 || 'de',
@@ -458,10 +484,21 @@ document.addEventListener('DOMContentLoaded', () => {
   $('search-btn').addEventListener('click', doSearch);
   if(st.user) showUser(st.user);
   updateWarn();
+
+  // Sortier-Buttons
+  document.querySelectorAll('.sort-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      currentSort = b.dataset.sort;
+      document.querySelectorAll('.sort-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      renderList();
+    });
+  });
 });
 
 function updateWarn() {
-  $('warn-proxy').style.display = st.proxyUrl ? 'none' : 'flex';
+  // Proxy-URL ist immer gesetzt (AUTO_PROXY als Fallback)
+  $('warn-proxy').style.display = 'none';
 }
 
 /* ── Swap ─────────────────────────────────────────────────── */
@@ -527,7 +564,6 @@ function saveSettings() {
 
 /* ── Suche ────────────────────────────────────────────────── */
 async function doSearch() {
-  if(!st.proxyUrl) { openSettings(); return; }
   const params = buildParams();
   if(!params) return;
 
@@ -603,34 +639,97 @@ function buildParams() {
     adults:$('mc-pax').value, travel_class:$('mc-class').value};
 }
 
+/* ── Sortierung ───────────────────────────────────────────── */
+let allFlights = [];
+let currentSort = 'best';
+
+function timeToMin(t) {
+  if(!t) return 9999;
+  const [h,m] = t.split(':').map(Number);
+  return h*60 + (m||0);
+}
+
+function sortFlights(flights, by) {
+  const f = [...flights];
+  if(by==='price')    return f.sort((a,b)=>(a.price||9999)-(b.price||9999));
+  if(by==='duration') return f.sort((a,b)=>(a.total_duration||9999)-(b.total_duration||9999));
+  if(by==='dep')      return f.sort((a,b)=>timeToMin(a.flights?.[0]?.departure_airport?.time)-timeToMin(b.flights?.[0]?.departure_airport?.time));
+  if(by==='arr')      return f.sort((a,b)=>timeToMin(a.flights?.[0]?.arrival_airport?.time)-timeToMin(b.flights?.[0]?.arrival_airport?.time));
+  return f; // 'best' = Originalreihenfolge von SerpAPI
+}
+
+function logoUrl(iata) {
+  // aviationstack / airlinelogos.net liefern Logos per IATA-Code
+  if(!iata) return '';
+  return `https://www.gstatic.com/flights/airline_logos/70px/${iata}.png`;
+}
+
+function airlineInitials(name) {
+  if(!name) return '?';
+  return name.split(' ').slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('');
+}
+
+function flightCard(f) {
+  const leg   = f.flights?.[0]||{};
+  const dep   = leg.departure_airport||{};
+  const arr   = leg.arrival_airport||{};
+  const stops = f.layovers?.length??0;
+  const dur   = f.total_duration ? `${Math.floor(f.total_duration/60)}h ${f.total_duration%60}min` : '';
+  const airlineName = leg.airline||'';
+  const flightNum   = leg.flight_number||'';
+  const iata        = leg.airline_logo
+    ? '' // SerpAPI liefert manchmal direkt eine Logo-URL
+    : (leg.iata_code || (flightNum.match(/^([A-Z]{2})/)?.[1] || ''));
+  const logoSrc = leg.airline_logo || (iata ? logoUrl(iata) : '');
+
+  const logoHtml = logoSrc
+    ? `<img class="airline-logo" src="${esc(logoSrc)}" alt="${esc(airlineName)}"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+       /><div class="airline-fallback" style="display:none">${esc(airlineInitials(airlineName))}</div>`
+    : `<div class="airline-fallback">${esc(airlineInitials(airlineName))}</div>`;
+
+  return `<div class="fcard">
+    <div class="fcard-left">
+      ${logoHtml}
+      <div>
+        <div class="ftimes">
+          ${esc(dep.time||'--:--')}
+          <span class="farrow">→</span>
+          ${esc(arr.time||'--:--')}
+          ${dur?`<span class="fdur">${esc(dur)}</span>`:''}
+        </div>
+        <div class="fmeta">
+          ${esc([airlineName,flightNum].filter(Boolean).join(' ')||'Airline unbekannt')}
+          · ${esc(dep.id||'?')} → ${esc(arr.id||'?')}
+        </div>
+        <span class="ftag">${stops===0?'Direktflug':stops+' Stopp'+(stops>1?'s':'')}</span>
+      </div>
+    </div>
+    <div class="fprice">${f.price
+      ?`<span class="amt">${esc(String(f.price))} ${esc(st.currency)}</span><span class="pp">pro Person</span>`
+      :'<span class="amt">Preis anfragen</span>'}
+    </div>
+  </div>`;
+}
+
+function renderList() {
+  const sorted = sortFlights(allFlights, currentSort);
+  $('results-list').innerHTML = sorted.slice(0,15).map(flightCard).join('');
+}
+
 /* ── Ergebnisse ───────────────────────────────────────────── */
 function renderResults(data) {
   if(data.error){renderErr(data.error);return;}
-  const fl=[...(data.best_flights||[]),...(data.other_flights||[])];
-  $('results-title').textContent = fl.length ? `${fl.length} Flüge gefunden` : 'Keine Flüge gefunden';
+  allFlights = [...(data.best_flights||[]),...(data.other_flights||[])];
+  $('results-title').textContent = allFlights.length ? `${allFlights.length} Flüge gefunden` : 'Keine Flüge gefunden';
   $('results').style.display='block';
-  if(!fl.length){
+  if(!allFlights.length){
     $('results-list').innerHTML='<div class="no-res">Keine Ergebnisse. Bitte IATA-Codes prüfen (z.B. BER, MUC, LHR, CDG, JFK).</div>';
     return;
   }
-  $('results-list').innerHTML = fl.slice(0,12).map(f=>{
-    const leg=f.flights?.[0]||{};
-    const dep=leg.departure_airport||{}, arr=leg.arrival_airport||{};
-    const stops=f.layovers?.length??0;
-    const dur=f.total_duration?`${Math.floor(f.total_duration/60)}h ${f.total_duration%60}min`:'';
-    const airline=[leg.airline,leg.flight_number].filter(Boolean).join(' ');
-    return `<div class="fcard">
-      <div>
-        <div class="ftimes">${esc(dep.time||'--:--')}<span class="farrow">→</span>${esc(arr.time||'--:--')}</div>
-        <div class="fmeta">${esc(airline||'Airline unbekannt')} · ${esc(dep.id||'?')} → ${esc(arr.id||'?')}${dur?' · '+dur:''}</div>
-        <span class="ftag">${stops===0?'Direktflug':stops+' Stopp'+(stops>1?'s':'')}</span>
-      </div>
-      <div class="fprice">${f.price
-        ?`<span class="amt">${esc(String(f.price))} ${esc(st.currency)}</span><span class="pp">pro Person</span>`
-        :'<span class="amt">Preis anfragen</span>'}
-      </div>
-    </div>`;
-  }).join('');
+  currentSort = 'best';
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort==='best'));
+  renderList();
 }
 
 function renderErr(msg) {
