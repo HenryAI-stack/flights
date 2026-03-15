@@ -181,6 +181,15 @@
     .no-res{text-align:center;padding:2.5rem;color:var(--text-2);font-size:14px}
     .no-res.err{color:#c0392b}
 
+    /* airport autocomplete */
+    .ac-wrap{position:relative}
+    .ac-dropdown{position:absolute;top:calc(100% + 3px);left:0;right:0;background:var(--surface);border:.5px solid var(--border-med);border-radius:var(--r);box-shadow:var(--shm);z-index:150;overflow:hidden}
+    .ac-item{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;transition:background .1s;border:none;background:none;width:100%;text-align:left}
+    .ac-item:hover,.ac-item.active{background:var(--sky-light)}
+    .ac-iata{font-size:13px;font-weight:700;color:var(--sky);min-width:32px}
+    .ac-name{font-size:13px;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ac-city{font-size:11px;color:var(--text-2);flex-shrink:0}
+
     /* modals */
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem}
     .modal{background:var(--surface);border:.5px solid var(--border);border-radius:var(--rl);padding:1.5rem;width:100%;max-width:480px;box-shadow:var(--shm);max-height:90vh;overflow-y:auto}
@@ -279,9 +288,9 @@
     <!-- Einfacher Flug -->
     <div id="tab-ow" class="tab-panel">
       <div class="route-row">
-        <div class="field"><label for="ow-from">Abflug</label><input type="text" id="ow-from" placeholder="IATA (z.B. BER)" autocomplete="off"/></div>
+        <div class="field"><label for="ow-from">Abflug</label><div class="ac-wrap"><input type="text" id="ow-from" placeholder="IATA oder Stadt" autocomplete="off"/></div></div>
         <button class="swap-btn" data-swap="ow-from,ow-to" title="Tauschen">⇄</button>
-        <div class="field"><label for="ow-to">Ziel</label><input type="text" id="ow-to" placeholder="IATA (z.B. LHR)" autocomplete="off"/></div>
+        <div class="field"><label for="ow-to">Ziel</label><div class="ac-wrap"><input type="text" id="ow-to" placeholder="IATA oder Stadt" autocomplete="off"/></div></div>
       </div>
       <div class="form-row c2">
         <div class="field"><label>Datum</label><div class="date-input" id="di-ow-date"><div class="date-display placeholder" tabindex="0">TT.MM.JJJJ <span class="date-cal-icon">📅</span></div></div></div>
@@ -306,9 +315,9 @@
     <!-- Hin- & Rückflug -->
     <div id="tab-rt" class="tab-panel" style="display:none">
       <div class="route-row">
-        <div class="field"><label for="rt-from">Abflug</label><input type="text" id="rt-from" placeholder="IATA (z.B. BER)" autocomplete="off"/></div>
+        <div class="field"><label for="rt-from">Abflug</label><div class="ac-wrap"><input type="text" id="rt-from" placeholder="IATA oder Stadt" autocomplete="off"/></div></div>
         <button class="swap-btn" data-swap="rt-from,rt-to" title="Tauschen">⇄</button>
-        <div class="field"><label for="rt-to">Ziel</label><input type="text" id="rt-to" placeholder="IATA (z.B. LHR)" autocomplete="off"/></div>
+        <div class="field"><label for="rt-to">Ziel</label><div class="ac-wrap"><input type="text" id="rt-to" placeholder="IATA oder Stadt" autocomplete="off"/></div></div>
       </div>
       <div class="form-row c3">
         <div class="field"><label>Hinflug</label><div class="date-input" id="di-rt-dep"><div class="date-display placeholder" tabindex="0">TT.MM.JJJJ <span class="date-cal-icon">📅</span></div></div></div>
@@ -333,8 +342,8 @@
         <strong>Trip-Planer:</strong> Start- und Endort angeben + beliebige Zwischenstopps. Die App sucht die günstigste Flugkombination für die gesamte Route.
       </div>
       <div class="form-row c2">
-        <div class="field"><label for="mc-origin">Reisestart (Heimatflughafen)</label><input type="text" id="mc-origin" placeholder="IATA (z.B. BER)" autocomplete="off"/></div>
-        <div class="field"><label for="mc-dest">Reiseende (Rückflug nach)</label><input type="text" id="mc-dest" placeholder="IATA – leer = Heimatflughafen" autocomplete="off"/></div>
+        <div class="field"><label for="mc-origin">Reisestart (Heimatflughafen)</label><div class="ac-wrap"><input type="text" id="mc-origin" placeholder="IATA oder Stadt" autocomplete="off"/></div></div>
+        <div class="field"><label for="mc-dest">Reiseende (Rückflug nach)</label><div class="ac-wrap"><input type="text" id="mc-dest" placeholder="IATA oder leer = Heimatflughafen" autocomplete="off"/></div></div>
       </div>
       <div class="form-row c2">
         <div class="field"><label>Reisebeginn</label><div class="date-input" id="di-mc-start"><div class="date-display placeholder" tabindex="0">TT.MM.JJJJ <span class="date-cal-icon">📅</span></div></div></div>
@@ -413,6 +422,193 @@
 <script>
 'use strict';
 
+/* ══════════════════════════════════════════════════════════
+   AIRPORT DATABASE – Top-Flughäfen für Autocomplete
+══════════════════════════════════════════════════════════ */
+const AIRPORTS = [
+  {iata:'BER',name:'Berlin Brandenburg',city:'Berlin'},
+  {iata:'MUC',name:'München Franz Josef Strauß',city:'München'},
+  {iata:'FRA',name:'Frankfurt am Main',city:'Frankfurt'},
+  {iata:'DUS',name:'Düsseldorf',city:'Düsseldorf'},
+  {iata:'HAM',name:'Hamburg Helmut Schmidt',city:'Hamburg'},
+  {iata:'STR',name:'Stuttgart',city:'Stuttgart'},
+  {iata:'CGN',name:'Köln/Bonn',city:'Köln'},
+  {iata:'NUE',name:'Nürnberg',city:'Nürnberg'},
+  {iata:'VIE',name:'Wien Schwechat',city:'Wien'},
+  {iata:'ZRH',name:'Zürich',city:'Zürich'},
+  {iata:'GVA',name:'Genf Cointrin',city:'Genf'},
+  {iata:'BSL',name:'Euro Airport Basel-Mulhouse',city:'Basel'},
+  {iata:'LHR',name:'London Heathrow',city:'London'},
+  {iata:'LGW',name:'London Gatwick',city:'London'},
+  {iata:'STN',name:'London Stansted',city:'London'},
+  {iata:'LCY',name:'London City',city:'London'},
+  {iata:'CDG',name:'Paris Charles de Gaulle',city:'Paris'},
+  {iata:'ORY',name:'Paris Orly',city:'Paris'},
+  {iata:'AMS',name:'Amsterdam Schiphol',city:'Amsterdam'},
+  {iata:'BRU',name:'Brüssel Zaventem',city:'Brüssel'},
+  {iata:'MAD',name:'Madrid Barajas',city:'Madrid'},
+  {iata:'BCN',name:'Barcelona El Prat',city:'Barcelona'},
+  {iata:'FCO',name:'Rom Fiumicino',city:'Rom'},
+  {iata:'MXP',name:'Mailand Malpensa',city:'Mailand'},
+  {iata:'LIN',name:'Mailand Linate',city:'Mailand'},
+  {iata:'ATH',name:'Athen Eleftherios Venizelos',city:'Athen'},
+  {iata:'IST',name:'Istanbul',city:'Istanbul'},
+  {iata:'SAW',name:'Istanbul Sabiha Gökçen',city:'Istanbul'},
+  {iata:'DXB',name:'Dubai International',city:'Dubai'},
+  {iata:'AUH',name:'Abu Dhabi',city:'Abu Dhabi'},
+  {iata:'DOH',name:'Doha Hamad',city:'Doha'},
+  {iata:'SIN',name:'Singapur Changi',city:'Singapur'},
+  {iata:'HKG',name:'Hongkong',city:'Hongkong'},
+  {iata:'NRT',name:'Tokio Narita',city:'Tokio'},
+  {iata:'HND',name:'Tokio Haneda',city:'Tokio'},
+  {iata:'ICN',name:'Seoul Incheon',city:'Seoul'},
+  {iata:'PEK',name:'Peking Capital',city:'Peking'},
+  {iata:'PKX',name:'Peking Daxing',city:'Peking'},
+  {iata:'PVG',name:'Shanghai Pudong',city:'Shanghai'},
+  {iata:'BOM',name:'Mumbai Chhatrapati Shivaji',city:'Mumbai'},
+  {iata:'DEL',name:'Delhi Indira Gandhi',city:'Delhi'},
+  {iata:'BKK',name:'Bangkok Suvarnabhumi',city:'Bangkok'},
+  {iata:'DMK',name:'Bangkok Don Mueang',city:'Bangkok'},
+  {iata:'KUL',name:'Kuala Lumpur',city:'Kuala Lumpur'},
+  {iata:'SYD',name:'Sydney Kingsford Smith',city:'Sydney'},
+  {iata:'MEL',name:'Melbourne',city:'Melbourne'},
+  {iata:'JFK',name:'New York JFK',city:'New York'},
+  {iata:'EWR',name:'New York Newark',city:'New York'},
+  {iata:'LGA',name:'New York LaGuardia',city:'New York'},
+  {iata:'LAX',name:'Los Angeles',city:'Los Angeles'},
+  {iata:'SFO',name:'San Francisco',city:'San Francisco'},
+  {iata:'ORD',name:'Chicago O'Hare',city:'Chicago'},
+  {iata:'MIA',name:'Miami',city:'Miami'},
+  {iata:'DFW',name:'Dallas Fort Worth',city:'Dallas'},
+  {iata:'ATL',name:'Atlanta Hartsfield',city:'Atlanta'},
+  {iata:'SEA',name:'Seattle-Tacoma',city:'Seattle'},
+  {iata:'BOS',name:'Boston Logan',city:'Boston'},
+  {iata:'YYZ',name:'Toronto Pearson',city:'Toronto'},
+  {iata:'YVR',name:'Vancouver',city:'Vancouver'},
+  {iata:'MEX',name:'Mexiko-Stadt',city:'Mexiko-Stadt'},
+  {iata:'GRU',name:'São Paulo Guarulhos',city:'São Paulo'},
+  {iata:'EZE',name:'Buenos Aires Ezeiza',city:'Buenos Aires'},
+  {iata:'SCL',name:'Santiago de Chile',city:'Santiago'},
+  {iata:'BOG',name:'Bogotá El Dorado',city:'Bogotá'},
+  {iata:'LIM',name:'Lima Jorge Chávez',city:'Lima'},
+  {iata:'CAI',name:'Kairo',city:'Kairo'},
+  {iata:'JNB',name:'Johannesburg',city:'Johannesburg'},
+  {iata:'CPT',name:'Kapstadt',city:'Kapstadt'},
+  {iata:'NBO',name:'Nairobi Jomo Kenyatta',city:'Nairobi'},
+  {iata:'ADD',name:'Addis Abeba Bole',city:'Addis Abeba'},
+  {iata:'CMN',name:'Casablanca Mohammed V',city:'Casablanca'},
+  {iata:'TUN',name:'Tunis-Carthage',city:'Tunis'},
+  {iata:'ALG',name:'Algier Houari Boumediene',city:'Algier'},
+  {iata:'HRG',name:'Hurghada',city:'Hurghada'},
+  {iata:'SSH',name:'Sharm El Sheikh',city:'Sharm el-Sheikh'},
+  {iata:'LCA',name:'Larnaka',city:'Larnaka'},
+  {iata:'PFO',name:'Paphos',city:'Paphos'},
+  {iata:'RHO',name:'Rhodos',city:'Rhodos'},
+  {iata:'HER',name:'Heraklion',city:'Heraklion'},
+  {iata:'CFU',name:'Korfu',city:'Korfu'},
+  {iata:'SKG',name:'Thessaloniki',city:'Thessaloniki'},
+  {iata:'PMI',name:'Palma de Mallorca',city:'Mallorca'},
+  {iata:'AGP',name:'Málaga',city:'Málaga'},
+  {iata:'ALC',name:'Alicante',city:'Alicante'},
+  {iata:'IBZ',name:'Ibiza',city:'Ibiza'},
+  {iata:'TFS',name:'Teneriffa Süd',city:'Teneriffa'},
+  {iata:'LPA',name:'Gran Canaria',city:'Gran Canaria'},
+  {iata:'ACE',name:'Lanzarote',city:'Lanzarote'},
+  {iata:'FUE',name:'Fuerteventura',city:'Fuerteventura'},
+  {iata:'DUB',name:'Dublin',city:'Dublin'},
+  {iata:'EDI',name:'Edinburgh',city:'Edinburgh'},
+  {iata:'MAN',name:'Manchester',city:'Manchester'},
+  {iata:'BHX',name:'Birmingham',city:'Birmingham'},
+  {iata:'CPH',name:'Kopenhagen',city:'Kopenhagen'},
+  {iata:'OSL',name:'Oslo Gardermoen',city:'Oslo'},
+  {iata:'ARN',name:'Stockholm Arlanda',city:'Stockholm'},
+  {iata:'HEL',name:'Helsinki Vantaa',city:'Helsinki'},
+  {iata:'WAW',name:'Warschau Chopin',city:'Warschau'},
+  {iata:'PRG',name:'Prag Václav Havel',city:'Prag'},
+  {iata:'BUD',name:'Budapest Ferenc Liszt',city:'Budapest'},
+  {iata:'OTP',name:'Bukarest Otopeni',city:'Bukarest'},
+  {iata:'SOF',name:'Sofia',city:'Sofia'},
+  {iata:'LJU',name:'Ljubljana Jože Pučnik',city:'Ljubljana'},
+  {iata:'ZAG',name:'Zagreb',city:'Zagreb'},
+  {iata:'SPU',name:'Split',city:'Split'},
+  {iata:'DBV',name:'Dubrovnik',city:'Dubrovnik'},
+  {iata:'TGD',name:'Podgorica',city:'Podgorica'},
+  {iata:'SKP',name:'Skopje',city:'Skopje'},
+  {iata:'TIA',name:'Tirana',city:'Tirana'},
+  {iata:'BEG',name:'Belgrad Nikola Tesla',city:'Belgrad'},
+  {iata:'SJJ',name:'Sarajevo',city:'Sarajevo'},
+  {iata:'LED',name:'St. Petersburg Pulkovo',city:'St. Petersburg'},
+  {iata:'SVO',name:'Moskau Scheremetjewo',city:'Moskau'},
+  {iata:'KBP',name:'Kiew Boryspil',city:'Kiew'},
+  {iata:'RIX',name:'Riga',city:'Riga'},
+  {iata:'TLL',name:'Tallinn',city:'Tallinn'},
+  {iata:'VNO',name:'Vilnius',city:'Vilnius'},
+  {iata:'TXL',name:'Berlin Tegel (hist.)',city:'Berlin'},
+  {iata:'OPO',name:'Porto',city:'Porto'},
+  {iata:'LIS',name:'Lissabon Humberto Delgado',city:'Lissabon'},
+  {iata:'FAO',name:'Faro',city:'Faro'},
+  {iata:'OLB',name:'Olbia Costa Smeralda',city:'Olbia'},
+  {iata:'CAG',name:'Cagliari',city:'Cagliari'},
+  {iata:'PMO',name:'Palermo',city:'Palermo'},
+  {iata:'CTA',name:'Catania Fontanarossa',city:'Catania'},
+  {iata:'NAP',name:'Neapel',city:'Neapel'},
+  {iata:'VCE',name:'Venedig Marco Polo',city:'Venedig'},
+  {iata:'BLQ',name:'Bologna',city:'Bologna'},
+  {iata:'PSA',name:'Pisa',city:'Pisa'},
+  {iata:'FLR',name:'Florenz Peretola',city:'Florenz'},
+  {iata:'BRI',name:'Bari Karol Wojtyla',city:'Bari'},
+  {iata:'TRN',name:'Turin Caselle',city:'Turin'},
+  {iata:'GVA',name:'Genf Cointrin',city:'Genf'},
+  {iata:'NCE',name:'Nizza Côte d'Azur',city:'Nizza'},
+  {iata:'MRS',name:'Marseille Provence',city:'Marseille'},
+  {iata:'LYS',name:'Lyon Saint-Exupéry',city:'Lyon'},
+  {iata:'TLS',name:'Toulouse Blagnac',city:'Toulouse'},
+  {iata:'BOD',name:'Bordeaux Mérignac',city:'Bordeaux'},
+  {iata:'NTE',name:'Nantes Atlantique',city:'Nantes'},
+  {iata:'SXF',name:'Berlin Schönefeld (hist.)',city:'Berlin'},
+  {iata:'LEJ',name:'Leipzig/Halle',city:'Leipzig'},
+  {iata:'DRS',name:'Dresden',city:'Dresden'},
+  {iata:'HAJ',name:'Hannover',city:'Hannover'},
+  {iata:'BRE',name:'Bremen',city:'Bremen'},
+  {iata:'FDH',name:'Friedrichshafen',city:'Friedrichshafen'},
+  {iata:'MLH',name:'Basel/Mulhouse (EAP)',city:'Basel'},
+  {iata:'GRZ',name:'Graz',city:'Graz'},
+  {iata:'INN',name:'Innsbruck',city:'Innsbruck'},
+  {iata:'SZG',name:'Salzburg',city:'Salzburg'},
+  {iata:'LNZ',name:'Linz',city:'Linz'},
+  {iata:'KLU',name:'Klagenfurt',city:'Klagenfurt'},
+];
+
+function searchAirports(query) {
+  if(!query || query.length < 2) return [];
+  const q = query.toUpperCase().trim();
+  const ql = query.toLowerCase().trim();
+  const results = [];
+  // Exakter IATA-Match zuerst
+  for(const a of AIRPORTS) {
+    if(a.iata === q) { results.push({...a, score:100}); }
+  }
+  // Starts-with IATA
+  for(const a of AIRPORTS) {
+    if(a.iata !== q && a.iata.startsWith(q)) results.push({...a, score:90});
+  }
+  // City/Name starts with
+  for(const a of AIRPORTS) {
+    if(a.city.toLowerCase().startsWith(ql)) results.push({...a, score:80});
+    else if(a.name.toLowerCase().startsWith(ql)) results.push({...a, score:70});
+  }
+  // City/Name contains
+  for(const a of AIRPORTS) {
+    if(a.city.toLowerCase().includes(ql) && !results.find(r=>r.iata===a.iata)) results.push({...a, score:50});
+    else if(a.name.toLowerCase().includes(ql) && !results.find(r=>r.iata===a.iata)) results.push({...a, score:40});
+  }
+  // Deduplicate & sort by score, return max 3
+  const seen = new Set();
+  return results.filter(a=>{ if(seen.has(a.iata)) return false; seen.add(a.iata); return true; })
+    .sort((a,b)=>b.score-a.score)
+    .slice(0,3);
+}
+
 const DEFAULT_KEY = 'af4a185cedc89384ec952f878f548278c2fd932f3061d855c1772aa9debfe5f6';
 const AUTO_PROXY  = window.location.origin + '/api/flights';
 
@@ -459,10 +655,17 @@ function toggleDp(id) {
 }
 
 function openDp(id) {
-  const s    = dpState[id];
-  const now  = new Date();
-  s.year  = s.year  || (s.value ? parseInt(s.value.split('-')[0]) : now.getFullYear());
-  s.month = s.month || (s.value ? parseInt(s.value.split('-')[1])-1 : now.getMonth());
+  const s   = dpState[id];
+  const now = new Date();
+  // Rückflug: minIso immer frisch aus dem aktuellen Hinflugwert holen
+  if(id==='di-rt-ret') {
+    const dep = getDate('di-rt-dep');
+    if(dep) s.minIso = dep;
+  }
+  // Jahr/Monat: zeige den Monat des gesetzten oder vorgeschlagenen Datums
+  const refIso = s.value || s.minIso || now.toISOString().split('T')[0];
+  s.year  = parseInt(refIso.split('-')[0]);
+  s.month = parseInt(refIso.split('-')[1]) - 1;
   renderDp(id);
 }
 
@@ -531,13 +734,15 @@ function selectDate(id, iso) {
 
 // Smart cascade: selecting one date auto-suggests the next
 function onDateSelected(id, iso) {
-  // Hin-/Rückflug: Hinflug gesetzt → Rückflug = Hinflug + 7 (wenn noch leer oder davor)
+  // Hin-/Rückflug: Hinflug gesetzt → minIso für Rückflug aktualisieren
   if(id==='di-rt-dep') {
-    const retPicker = dpState['di-rt-ret'];
-    if(retPicker && (!retPicker.value || retPicker.value <= iso)) {
-      const suggested = plus(new Date(iso), 7).toISOString().split('T')[0];
-      selectDate('di-rt-ret', suggested);
-      if(dpState['di-rt-ret']) dpState['di-rt-ret'].minIso = iso;
+    if(dpState['di-rt-ret']) {
+      dpState['di-rt-ret'].minIso = iso;
+      // Rückflugdatum nur anpassen wenn es VOR dem neuen Hinflugdatum liegt
+      if(!dpState['di-rt-ret'].value || dpState['di-rt-ret'].value <= iso) {
+        const suggested = plus(new Date(iso), 7).toISOString().split('T')[0];
+        selectDate('di-rt-ret', suggested);
+      }
     }
   }
   // Trip-Planer Start → alle Stopp-Daten cascadieren
@@ -625,17 +830,38 @@ document.addEventListener('DOMContentLoaded', () => {
   initDatepicker('di-mc-start',todayIso, todayIso);
   initDatepicker('di-mc-end',  plus14,   todayIso);
 
-  // Tabs
+  // Tabs – beim Wechsel Flughäfen synchron halten
   document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
-    st.tab=b.dataset.tab;
+    const prev = st.tab;
+    st.tab = b.dataset.tab;
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
     b.classList.add('active');
     document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
     $('tab-'+st.tab).style.display='block';
+    syncAirports(prev, st.tab);
     hideRes();
   }));
 
   document.querySelectorAll('.swap-btn[data-swap]').forEach(bindSwap);
+
+  // Airport-Sync zwischen Tabs
+  function syncAirports(from, to) {
+    const map = {
+      'ow': { from:'ow-from', to:'ow-to' },
+      'rt': { from:'rt-from', to:'rt-to' },
+      'mc': { from:'mc-origin', to:'mc-dest' },
+    };
+    const src = map[from], dst = map[to];
+    if(!src || !dst) return;
+    const fromVal = $(src.from)?.value || '';
+    const toVal   = $(src.to)?.value   || '';
+    if(fromVal && $(dst.from)) $(dst.from).value = fromVal;
+    if(toVal   && $(dst.to))   $(dst.to).value   = toVal;
+  }
+
+  // Autocomplete für alle Airport-Inputs aktivieren
+  const AIRPORT_INPUT_IDS = ['ow-from','ow-to','rt-from','rt-to','mc-origin','mc-dest'];
+  AIRPORT_INPUT_IDS.forEach(initAirportAC);
 
   // Trip-planer: init 2 stops
   addSeg(); addSeg();
@@ -708,7 +934,7 @@ function addSeg(){
   div.innerHTML=`
     <div class="seg-label">Stopp ${n} ${n>2?'<button class="remove-seg" aria-label="Entfernen">×</button>':''}</div>
     <div class="form-row c2">
-      <div class="field"><label>Stadt / Flughafen</label><input type="text" id="sf${n}" placeholder="IATA (z.B. DXB)" autocomplete="off"/></div>
+      <div class="field"><label>Stadt / Flughafen</label><div class="ac-wrap"><input type="text" id="sf${n}" placeholder="IATA oder Stadt" autocomplete="off"/></div></div>
       <div class="field"><label>Ankunft frühestens</label><div class="date-input" id="di-sf${n}"><div class="date-display placeholder" tabindex="0">TT.MM.JJJJ <span class="date-cal-icon">📅</span></div></div></div>
     </div>`;
   $('seg-container').appendChild(div);
@@ -723,6 +949,94 @@ function addSeg(){
   initDatepicker('di-sf'+n, suggestIso, startIso);
   const rm=div.querySelector('.remove-seg');
   if(rm) rm.addEventListener('click',()=>div.remove());
+  initSegAC(n);
+}
+
+/* ══════════════════════════════════════════════════════════
+   AIRPORT AUTOCOMPLETE
+══════════════════════════════════════════════════════════ */
+function initAirportAC(inputId) {
+  const inp = $(inputId);
+  if(!inp) return;
+  const wrap = inp.closest('.ac-wrap');
+  if(!wrap) return;
+  wrap.style.position = 'relative';
+
+  let activeIdx = -1;
+
+  inp.addEventListener('input', () => {
+    closeAC(inputId);
+    activeIdx = -1;
+    const q = inp.value.trim();
+    if(q.length < 2) return;
+    const results = searchAirports(q);
+    if(!results.length) return;
+    showAC(inputId, results, inp, wrap);
+  });
+
+  inp.addEventListener('keydown', e => {
+    const dd = wrap.querySelector('.ac-dropdown');
+    if(!dd) return;
+    const items = [...dd.querySelectorAll('.ac-item')];
+    if(e.key==='ArrowDown'){
+      e.preventDefault();
+      activeIdx = Math.min(activeIdx+1, items.length-1);
+      items.forEach((it,i)=>it.classList.toggle('active',i===activeIdx));
+    } else if(e.key==='ArrowUp'){
+      e.preventDefault();
+      activeIdx = Math.max(activeIdx-1, 0);
+      items.forEach((it,i)=>it.classList.toggle('active',i===activeIdx));
+    } else if(e.key==='Enter' && activeIdx>=0){
+      e.preventDefault();
+      items[activeIdx]?.click();
+    } else if(e.key==='Escape'){
+      closeAC(inputId);
+    }
+  });
+
+  inp.addEventListener('blur', () => {
+    // Small delay so click on item registers first
+    setTimeout(() => closeAC(inputId), 150);
+  });
+}
+
+function showAC(inputId, results, inp, wrap) {
+  const dd = document.createElement('div');
+  dd.className = 'ac-dropdown';
+  dd.dataset.for = inputId;
+  dd.innerHTML = results.map((a,i) => `
+    <button class="ac-item" data-iata="${esc(a.iata)}" type="button">
+      <span class="ac-iata">${esc(a.iata)}</span>
+      <span class="ac-name">${esc(a.name)}</span>
+      <span class="ac-city">${esc(a.city)}</span>
+    </button>`).join('');
+
+  dd.addEventListener('mousedown', e => {
+    const item = e.target.closest('.ac-item');
+    if(!item) return;
+    e.preventDefault();
+    inp.value = item.dataset.iata;
+    closeAC(inputId);
+    inp.dispatchEvent(new Event('change'));
+    // Sync to paired tab field
+    syncPairedField(inputId, item.dataset.iata);
+  });
+
+  wrap.appendChild(dd);
+}
+
+function closeAC(inputId) {
+  document.querySelectorAll(`.ac-dropdown[data-for="${inputId}"]`).forEach(el=>el.remove());
+}
+
+function syncPairedField(inputId, value) {
+  // Keep matching fields in other tabs in sync
+  const pairs = {
+    'ow-from':'rt-from', 'rt-from':'ow-from',
+    'ow-to':'rt-to',     'rt-to':'ow-to',
+  };
+  const paired = pairs[inputId];
+  if(paired && $(paired)) $(paired).value = value;
 }
 
 /* ══════════════════════════════════════════════════════════
