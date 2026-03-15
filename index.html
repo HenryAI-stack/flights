@@ -7,198 +7,142 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --sky:        #1a6dff;
-      --sky-dark:   #0047cc;
-      --sky-light:  #e8f0ff;
-      --bg:         #f4f6fa;
-      --surface:    #ffffff;
-      --surface-2:  #f0f2f7;
-      --border:     rgba(0,0,0,0.10);
-      --border-med: rgba(0,0,0,0.18);
-      --text-1:     #111827;
-      --text-2:     #6b7280;
-      --text-3:     #9ca3af;
-      --radius-sm:  8px;
-      --radius-lg:  16px;
-      --shadow-sm:  0 1px 3px rgba(0,0,0,0.08);
-      --shadow-md:  0 4px 16px rgba(0,0,0,0.10);
+      --sky:#1a6dff; --sky-dark:#0047cc; --sky-light:#e8f0ff;
+      --bg:#f4f6fa; --surface:#fff; --surface-2:#f0f2f7;
+      --border:rgba(0,0,0,.10); --border-med:rgba(0,0,0,.18);
+      --text-1:#111827; --text-2:#6b7280; --text-3:#9ca3af;
+      --r:8px; --rl:16px;
+      --sh:0 1px 3px rgba(0,0,0,.08); --shm:0 4px 16px rgba(0,0,0,.10);
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg:         #0f1117; --surface:    #1a1d27; --surface-2:  #23263a;
-        --border:     rgba(255,255,255,0.08); --border-med: rgba(255,255,255,0.16);
-        --text-1:     #f0f2f7; --text-2:     #9ca3af; --text-3:     #6b7280;
-        --sky-light:  rgba(26,109,255,0.18);
-      }
-    }
+    @media(prefers-color-scheme:dark){:root{
+      --bg:#0f1117; --surface:#1a1d27; --surface-2:#23263a;
+      --border:rgba(255,255,255,.08); --border-med:rgba(255,255,255,.16);
+      --text-1:#f0f2f7; --text-2:#9ca3af; --text-3:#6b7280;
+      --sky-light:rgba(26,109,255,.18);
+    }}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:15px;line-height:1.5}
+    .app{max-width:920px;margin:0 auto;padding:1.5rem 1rem 4rem}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-      background: var(--bg); color: var(--text-1);
-      min-height: 100vh; font-size: 15px; line-height: 1.5;
-    }
-    .app { max-width: 920px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+    /* topbar */
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:10px}
+    .logo{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:600;color:var(--text-1)}
+    .logo-icon{width:34px;height:34px;background:var(--sky);border-radius:var(--r);display:flex;align-items:center;justify-content:center}
+    .topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .btn-icon{display:flex;align-items:center;gap:6px;padding:7px 12px;background:var(--surface);border:.5px solid var(--border-med);border-radius:var(--r);font-size:13px;color:var(--text-2);cursor:pointer;transition:background .15s}
+    .btn-icon:hover{background:var(--surface-2)}
 
-    /* ── Topbar ── */
-    .topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 2rem; flex-wrap: wrap; gap: 10px;
-    }
-    .logo { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; color: var(--text-1); }
-    .logo-icon { width: 34px; height: 34px; background: var(--sky); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
-    .topbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .btn-settings {
-      display: flex; align-items: center; gap: 6px; padding: 7px 12px;
-      background: var(--surface); border: 0.5px solid var(--border-med);
-      border-radius: var(--radius-sm); font-size: 13px; color: var(--text-2);
-      cursor: pointer; transition: background 0.15s;
-    }
-    .btn-settings:hover { background: var(--surface-2); }
+    /* user badge */
+    .user-badge{display:flex;align-items:center;gap:8px;background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:5px 10px}
+    .user-avatar{width:28px;height:28px;border-radius:50%;background:var(--sky);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;overflow:hidden;flex-shrink:0}
+    .user-avatar img{width:100%;height:100%;object-fit:cover}
+    .user-name{font-size:13px;color:var(--text-1);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .btn-x{background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-3);line-height:1;padding:0 2px;transition:color .15s}
+    .btn-x:hover{color:var(--text-1)}
 
-    /* ── User Badge ── */
-    .user-badge { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 5px 10px; }
-    .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--sky); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; overflow: hidden; flex-shrink: 0; }
-    .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .user-name { font-size: 13px; color: var(--text-1); max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .btn-logout { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text-3); line-height: 1; padding: 0 2px; transition: color 0.15s; }
-    .btn-logout:hover { color: var(--text-1); }
+    /* hero */
+    .hero{text-align:center;margin-bottom:1.75rem}
+    .hero h1{font-size:28px;font-weight:600;letter-spacing:-.5px;margin-bottom:6px}
+    .hero p{font-size:14px;color:var(--text-2)}
 
-    /* ── Hero ── */
-    .hero { text-align: center; margin-bottom: 1.75rem; }
-    .hero h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 6px; }
-    .hero p { font-size: 14px; color: var(--text-2); }
+    /* card */
+    .card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--rl);padding:1.5rem;box-shadow:var(--sh)}
 
-    /* ── Card ── */
-    .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); }
+    /* banner */
+    .banner{display:flex;align-items:center;gap:8px;border-radius:var(--r);padding:10px 14px;font-size:12px;margin-bottom:1rem}
+    .banner.warn{background:#fffbea;border:.5px solid #f0c040;color:#7a5c00}
+    .banner.warn button{background:none;border:none;cursor:pointer;color:#7a5c00;font-weight:600;font-size:12px;padding:0;margin-left:4px;text-decoration:underline}
 
-    /* ── Banner ── */
-    .banner {
-      display: flex; align-items: center; gap: 8px;
-      border-radius: var(--radius-sm); padding: 10px 14px;
-      font-size: 12px; margin-bottom: 1rem;
-    }
-    .banner.warn { background: #fffbea; border: 0.5px solid #f0c040; color: #7a5c00; }
-    .banner.warn button { background: none; border: none; cursor: pointer; color: #7a5c00; font-weight: 600; font-size: 12px; padding: 0; margin-left: 4px; text-decoration: underline; }
-    .banner.info { background: var(--sky-light); border: 0.5px solid rgba(26,109,255,0.3); color: #0047cc; }
+    /* tabs */
+    .tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:10px;margin-bottom:1.5rem}
+    .tab{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 8px;border:none;border-radius:8px;background:none;font-size:13px;color:var(--text-2);cursor:pointer;transition:all .15s;white-space:nowrap}
+    .tab.active{background:var(--surface);color:var(--text-1);font-weight:500;border:.5px solid var(--border);box-shadow:var(--sh)}
 
-    /* ── Tabs ── */
-    .tabs { display: flex; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 10px; margin-bottom: 1.5rem; }
-    .tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 8px; border: none; border-radius: 8px; background: none; font-size: 13px; color: var(--text-2); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
-    .tab.active { background: var(--surface); color: var(--text-1); font-weight: 500; border: 0.5px solid var(--border); box-shadow: var(--shadow-sm); }
+    /* form */
+    .tab-panel{animation:fi .15s ease}
+    @keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+    .form-row{display:grid;gap:12px;margin-bottom:12px}
+    .form-row.c2{grid-template-columns:1fr 1fr}
+    .form-row.c3{grid-template-columns:1fr 1fr 1fr}
+    .route-row{display:flex;align-items:flex-end;gap:8px;margin-bottom:12px}
+    .route-row .field{flex:1}
+    .field{display:flex;flex-direction:column;gap:5px}
+    .field label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2)}
+    .field input,.field select{width:100%;padding:10px 12px;background:var(--surface-2);border:.5px solid var(--border-med);border-radius:var(--r);font-size:14px;color:var(--text-1);outline:none;transition:border-color .15s,box-shadow .15s;appearance:none}
+    .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+    .field input:focus,.field select:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(26,109,255,.12)}
+    .field input::placeholder{color:var(--text-3)}
+    .swap-btn{flex-shrink:0;width:38px;height:40px;align-self:flex-end;background:var(--surface-2);border:.5px solid var(--border-med);border-radius:var(--r);cursor:pointer;font-size:16px;color:var(--text-2);display:flex;align-items:center;justify-content:center;transition:all .15s}
+    .swap-btn:hover{background:var(--sky-light);color:var(--sky);border-color:var(--sky)}
 
-    /* ── Form ── */
-    .tab-panel { animation: fadeIn 0.15s ease; }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+    /* multi-city */
+    .multi-seg{position:relative;border:.5px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px}
+    .seg-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:10px}
+    .remove-seg{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;color:var(--text-3);font-size:18px;line-height:1;padding:2px 6px;border-radius:4px;transition:all .15s}
+    .remove-seg:hover{color:var(--text-1);background:var(--surface-2)}
+    .add-seg-btn{width:100%;padding:10px;background:none;border:.5px dashed var(--border-med);border-radius:var(--r);font-size:13px;color:var(--text-2);cursor:pointer;margin-bottom:14px;transition:all .15s}
+    .add-seg-btn:hover{border-color:var(--sky);color:var(--sky);background:var(--sky-light)}
 
-    .form-row { display: grid; gap: 12px; margin-bottom: 12px; }
-    .form-row.cols-2 { grid-template-columns: 1fr 1fr; }
-    .form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-    .route-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 12px; }
-    .route-row .field { flex: 1; }
+    /* search */
+    .search-btn{width:100%;padding:13px;margin-top:6px;background:var(--sky);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
+    .search-btn:hover{background:var(--sky-dark)}
+    .search-btn:disabled{background:var(--border-med);cursor:not-allowed}
+    .dots{display:inline-flex;gap:4px;vertical-align:middle;margin-left:8px}
+    .dots span{width:5px;height:5px;border-radius:50%;background:#fff;animation:bo 1s infinite}
+    .dots span:nth-child(2){animation-delay:.15s}
+    .dots span:nth-child(3){animation-delay:.3s}
+    @keyframes bo{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
 
-    .field { display: flex; flex-direction: column; gap: 5px; }
-    .field label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); }
-    .field input, .field select {
-      width: 100%; padding: 10px 12px;
-      background: var(--surface-2); border: 0.5px solid var(--border-med);
-      border-radius: var(--radius-sm); font-size: 14px; color: var(--text-1);
-      outline: none; transition: border-color 0.15s, box-shadow 0.15s;
-      appearance: none; -webkit-appearance: none;
-    }
-    .field select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px;
-    }
-    .field input:focus, .field select:focus { border-color: var(--sky); box-shadow: 0 0 0 3px rgba(26,109,255,0.12); }
-    .field input::placeholder { color: var(--text-3); }
+    /* results */
+    .results{margin-top:1.5rem}
+    .results h3{font-size:15px;font-weight:600;margin-bottom:1rem}
+    .fcard{display:flex;align-items:center;justify-content:space-between;gap:1rem;background:var(--surface);border:.5px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-bottom:10px;box-shadow:var(--sh);transition:box-shadow .15s}
+    .fcard:hover{box-shadow:var(--shm)}
+    .ftimes{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600}
+    .farrow{color:var(--text-3);font-size:13px}
+    .fmeta{font-size:12px;color:var(--text-2);margin-top:3px}
+    .ftag{display:inline-block;background:var(--sky-light);color:var(--sky);font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;margin-top:6px}
+    .fprice{text-align:right;flex-shrink:0}
+    .fprice .amt{font-size:17px;font-weight:700;color:var(--sky)}
+    .fprice .pp{display:block;font-size:11px;color:var(--text-3);margin-top:2px}
+    .no-res{text-align:center;padding:2.5rem;color:var(--text-2);font-size:14px}
+    .no-res.err{color:#c0392b}
 
-    .swap-btn {
-      flex-shrink: 0; width: 38px; height: 40px; align-self: flex-end;
-      background: var(--surface-2); border: 0.5px solid var(--border-med);
-      border-radius: var(--radius-sm); cursor: pointer; font-size: 16px;
-      color: var(--text-2); display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s;
-    }
-    .swap-btn:hover { background: var(--sky-light); color: var(--sky); border-color: var(--sky); }
+    /* modals */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:1rem}
+    .modal{background:var(--surface);border:.5px solid var(--border);border-radius:var(--rl);padding:1.5rem;width:100%;max-width:480px;box-shadow:var(--shm);max-height:90vh;overflow-y:auto}
+    .modal h2{font-size:17px;font-weight:600;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between}
+    .modal .field{margin-bottom:14px}
+    .modal-note{font-size:12px;color:var(--text-2);line-height:1.6;margin-bottom:1rem}
+    .modal-note a{color:var(--sky)}
+    .key-row{display:flex;gap:8px}
+    .key-row input{flex:1}
+    .key-toggle{background:none;border:.5px solid var(--border-med);border-radius:var(--r);padding:10px;cursor:pointer;color:var(--text-2);font-size:12px;white-space:nowrap;transition:background .15s}
+    .key-toggle:hover{background:var(--surface-2)}
+    .save-btn{width:100%;padding:11px;background:var(--sky);border:none;border-radius:var(--r);color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px;transition:background .15s}
+    .save-btn:hover{background:var(--sky-dark)}
+    .smsg{font-size:12px;padding:8px 12px;border-radius:6px;margin-top:10px;text-align:center}
+    .smsg.ok{background:#eaf6ed;color:#1a7a3a}
+    .smsg.err{background:#fceaea;color:#c0392b}
 
-    /* ── Multi-City ── */
-    .multi-segment { position: relative; border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 12px; }
-    .segment-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); margin-bottom: 10px; }
-    .remove-seg { position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 4px; transition: all 0.15s; }
-    .remove-seg:hover { color: var(--text-1); background: var(--surface-2); }
-    .add-segment-btn { width: 100%; padding: 10px; background: none; border: 0.5px dashed var(--border-med); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-2); cursor: pointer; margin-bottom: 14px; transition: all 0.15s; }
-    .add-segment-btn:hover { border-color: var(--sky); color: var(--sky); background: var(--sky-light); }
+    /* proxy setup box */
+    .setup-box{background:var(--sky-light);border:.5px solid rgba(26,109,255,.25);border-radius:var(--r);padding:14px;margin-bottom:16px}
+    .setup-box h3{font-size:13px;font-weight:600;color:#0047cc;margin-bottom:12px}
+    .setup-steps{list-style:none;counter-reset:sc}
+    .setup-steps li{counter-increment:sc;display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--text-1);margin-bottom:10px}
+    .setup-steps li::before{content:counter(sc);flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--sky);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+    .setup-steps a{color:var(--sky)}
+    code{background:var(--surface-2);border:.5px solid var(--border);border-radius:4px;padding:1px 5px;font-size:12px;font-family:monospace;color:var(--text-1)}
 
-    /* ── Search Button ── */
-    .search-btn { width: 100%; padding: 13px; margin-top: 6px; background: var(--sky); border: none; border-radius: 10px; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-    .search-btn:hover { background: var(--sky-dark); }
-    .search-btn:disabled { background: var(--border-med); cursor: not-allowed; }
-
-    .loading-dots { display: inline-flex; gap: 4px; vertical-align: middle; margin-left: 8px; }
-    .loading-dots span { width: 5px; height: 5px; border-radius: 50%; background: #fff; animation: bounce 1s infinite; }
-    .loading-dots span:nth-child(2) { animation-delay: 0.15s; }
-    .loading-dots span:nth-child(3) { animation-delay: 0.30s; }
-    @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-5px)} }
-
-    /* ── Results ── */
-    .results-area { margin-top: 1.5rem; }
-    .results-area h3 { font-size: 15px; font-weight: 600; margin-bottom: 1rem; }
-
-    .flight-card {
-      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-      background: var(--surface); border: 0.5px solid var(--border);
-      border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 10px;
-      box-shadow: var(--shadow-sm); transition: box-shadow 0.15s;
-    }
-    .flight-card:hover { box-shadow: var(--shadow-md); }
-    .flight-times { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
-    .flight-arrow { color: var(--text-3); font-size: 13px; }
-    .flight-meta { font-size: 12px; color: var(--text-2); margin-top: 3px; }
-    .flight-tag { display: inline-block; background: var(--sky-light); color: var(--sky); font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 4px; margin-top: 6px; }
-    .flight-price { text-align: right; flex-shrink: 0; }
-    .flight-price .amount { font-size: 17px; font-weight: 700; color: var(--sky); }
-    .flight-price .per-person { display: block; font-size: 11px; color: var(--text-3); margin-top: 2px; }
-
-    .no-results { text-align: center; padding: 2.5rem; color: var(--text-2); font-size: 14px; }
-    .no-results.error { color: #c0392b; }
-
-    /* ── Modals ── */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 1rem; }
-    .modal { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.5rem; width: 100%; max-width: 440px; box-shadow: var(--shadow-md); }
-    .modal h2 { font-size: 17px; font-weight: 600; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; }
-    .modal-close { background: none; border: none; cursor: pointer; font-size: 22px; color: var(--text-3); line-height: 1; }
-    .modal-close:hover { color: var(--text-1); }
-    .modal .field { margin-bottom: 14px; }
-    .modal-note { font-size: 12px; color: var(--text-2); line-height: 1.6; margin-bottom: 1rem; }
-    .modal-note a { color: var(--sky); }
-
-    .save-btn { width: 100%; padding: 11px; background: var(--sky); border: none; border-radius: var(--radius-sm); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 6px; transition: background 0.15s; }
-    .save-btn:hover { background: var(--sky-dark); }
-
-    .key-display { display: flex; align-items: center; gap: 8px; }
-    .key-display input { flex: 1; }
-    .key-toggle { background: none; border: 0.5px solid var(--border-med); border-radius: var(--radius-sm); padding: 10px; cursor: pointer; color: var(--text-2); font-size: 12px; white-space: nowrap; transition: background 0.15s; }
-    .key-toggle:hover { background: var(--surface-2); }
-
-    .status-msg { font-size: 12px; padding: 8px 12px; border-radius: 6px; margin-top: 10px; text-align: center; }
-    .status-msg.ok  { background: #eaf6ed; color: #1a7a3a; }
-    .status-msg.err { background: #fceaea; color: #c0392b; }
-
-    /* ── Responsive ── */
-    @media (max-width: 600px) {
-      .form-row.cols-2, .form-row.cols-3 { grid-template-columns: 1fr; }
-      .tabs { flex-direction: column; }
-      .tab  { justify-content: flex-start; }
-      .flight-card { flex-direction: column; align-items: flex-start; }
-      .flight-price { text-align: left; }
-      .hero h1 { font-size: 22px; }
+    @media(max-width:600px){
+      .form-row.c2,.form-row.c3{grid-template-columns:1fr}
+      .tabs{flex-direction:column} .tab{justify-content:flex-start}
+      .fcard{flex-direction:column;align-items:flex-start} .fprice{text-align:left}
+      .hero h1{font-size:22px}
     }
   </style>
 </head>
 <body>
-
 <div class="app">
 
   <!-- Topbar -->
@@ -212,7 +156,7 @@
       SkySearch
     </div>
     <div class="topbar-right">
-      <button class="btn-settings" id="btn-settings">
+      <button class="btn-icon" id="btn-settings">
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="3"/>
           <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
@@ -222,16 +166,14 @@
       <div id="g_id_onload"
            data-client_id="876959021639-11ms2ssqqpgs50anvcie56n7ljhqjsmr.apps.googleusercontent.com"
            data-callback="handleGoogleCredential"
-           data-auto_prompt="false">
-      </div>
+           data-auto_prompt="false"></div>
       <div id="google-signin-btn" class="g_id_signin"
            data-type="standard" data-size="medium" data-theme="outline"
-           data-text="signin_with" data-shape="rectangular" data-logo_alignment="left">
-      </div>
+           data-text="signin_with" data-shape="rectangular" data-logo_alignment="left"></div>
       <div id="user-badge" class="user-badge" style="display:none">
-        <div class="user-avatar" id="user-avatar-img"></div>
-        <span class="user-name" id="user-display-name"></span>
-        <button class="btn-logout" id="btn-logout" title="Abmelden">×</button>
+        <div class="user-avatar" id="user-avatar"></div>
+        <span class="user-name" id="user-name"></span>
+        <button class="btn-x" id="btn-logout" title="Abmelden">×</button>
       </div>
     </div>
   </header>
@@ -244,23 +186,23 @@
 
   <!-- Search Card -->
   <div class="card">
-    <div class="banner warn" id="api-warning" style="display:none">
+    <div class="banner warn" id="warn-proxy" style="display:none">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
-      Kein SerpAPI-Key hinterlegt.
-      <button id="warn-settings-btn">Jetzt einrichten →</button>
+      Kein Cloudflare-Worker-URL konfiguriert.
+      <button id="warn-btn">Jetzt einrichten →</button>
     </div>
 
     <!-- Tabs -->
     <div class="tabs" role="tablist">
-      <button class="tab active" role="tab" data-tab="one-way">
+      <button class="tab active" role="tab" data-tab="ow">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
         </svg>
         Einfacher Flug
       </button>
-      <button class="tab" role="tab" data-tab="round-trip">
+      <button class="tab" role="tab" data-tab="rt">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <polyline points="17 1 21 5 17 9"/>
           <path d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/>
@@ -268,7 +210,7 @@
         </svg>
         Hin- &amp; Rückflug
       </button>
-      <button class="tab" role="tab" data-tab="multi-city">
+      <button class="tab" role="tab" data-tab="mc">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10"/><polyline points="2 12 12 2 22 12"/>
         </svg>
@@ -277,13 +219,13 @@
     </div>
 
     <!-- Einfacher Flug -->
-    <div id="tab-one-way" class="tab-panel">
+    <div id="tab-ow" class="tab-panel">
       <div class="route-row">
-        <div class="field"><label for="ow-from">Abflug</label><input type="text" id="ow-from" placeholder="IATA-Code oder Stadt (z.B. BER)" autocomplete="off"/></div>
+        <div class="field"><label for="ow-from">Abflug</label><input type="text" id="ow-from" placeholder="IATA-Code (z.B. BER, MUC)" autocomplete="off"/></div>
         <button class="swap-btn" data-swap="ow-from,ow-to" title="Tauschen">⇄</button>
-        <div class="field"><label for="ow-to">Ziel</label><input type="text" id="ow-to" placeholder="IATA-Code oder Stadt (z.B. LHR)" autocomplete="off"/></div>
+        <div class="field"><label for="ow-to">Ziel</label><input type="text" id="ow-to" placeholder="IATA-Code (z.B. LHR, JFK)" autocomplete="off"/></div>
       </div>
-      <div class="form-row cols-2">
+      <div class="form-row c2">
         <div class="field"><label for="ow-date">Datum</label><input type="date" id="ow-date"/></div>
         <div class="field"><label for="ow-pax">Passagiere</label>
           <select id="ow-pax">
@@ -293,7 +235,7 @@
           </select>
         </div>
       </div>
-      <div class="form-row cols-2">
+      <div class="form-row c2">
         <div class="field"><label for="ow-class">Klasse</label>
           <select id="ow-class">
             <option value="1">Economy</option><option value="2">Premium Economy</option>
@@ -309,13 +251,13 @@
     </div>
 
     <!-- Hin- & Rückflug -->
-    <div id="tab-round-trip" class="tab-panel" style="display:none">
+    <div id="tab-rt" class="tab-panel" style="display:none">
       <div class="route-row">
-        <div class="field"><label for="rt-from">Abflug</label><input type="text" id="rt-from" placeholder="IATA-Code oder Stadt" autocomplete="off"/></div>
+        <div class="field"><label for="rt-from">Abflug</label><input type="text" id="rt-from" placeholder="IATA-Code (z.B. BER)" autocomplete="off"/></div>
         <button class="swap-btn" data-swap="rt-from,rt-to" title="Tauschen">⇄</button>
-        <div class="field"><label for="rt-to">Ziel</label><input type="text" id="rt-to" placeholder="IATA-Code oder Stadt" autocomplete="off"/></div>
+        <div class="field"><label for="rt-to">Ziel</label><input type="text" id="rt-to" placeholder="IATA-Code (z.B. LHR)" autocomplete="off"/></div>
       </div>
-      <div class="form-row cols-3">
+      <div class="form-row c3">
         <div class="field"><label for="rt-dep">Hinflug</label><input type="date" id="rt-dep"/></div>
         <div class="field"><label for="rt-ret">Rückflug</label><input type="date" id="rt-ret"/></div>
         <div class="field"><label for="rt-pax">Passagiere</label>
@@ -325,7 +267,7 @@
           </select>
         </div>
       </div>
-      <div class="form-row cols-2">
+      <div class="form-row c2">
         <div class="field"><label for="rt-class">Klasse</label>
           <select id="rt-class">
             <option value="1">Economy</option><option value="2">Premium Economy</option>
@@ -341,10 +283,10 @@
     </div>
 
     <!-- Multi-City -->
-    <div id="tab-multi-city" class="tab-panel" style="display:none">
-      <div id="segments-container"></div>
-      <button class="add-segment-btn" id="add-segment-btn">+ Weiteren Stopp hinzufügen</button>
-      <div class="form-row cols-2">
+    <div id="tab-mc" class="tab-panel" style="display:none">
+      <div id="seg-container"></div>
+      <button class="add-seg-btn" id="add-seg-btn">+ Weiteren Stopp hinzufügen</button>
+      <div class="form-row c2">
         <div class="field"><label for="mc-pax">Passagiere</label>
           <select id="mc-pax">
             <option value="1">1</option><option value="2">2</option><option value="3">3</option>
@@ -364,382 +306,343 @@
   </div>
 
   <!-- Ergebnisse -->
-  <section class="results-area" id="results-area" style="display:none">
+  <section class="results" id="results" style="display:none">
     <h3 id="results-title"></h3>
     <div id="results-list"></div>
   </section>
 </div>
 
 <!-- Einstellungen Modal -->
-<div class="modal-overlay" id="settings-modal" style="display:none">
+<div class="overlay" id="settings-modal" style="display:none">
   <div class="modal">
-    <h2>
-      Einstellungen
-      <button class="modal-close" data-close="settings-modal">×</button>
-    </h2>
-    <p class="modal-note">
-      SerpAPI-Key für Google Flights Daten. Kostenlosen Key auf
-      <a href="https://serpapi.com" target="_blank" rel="noopener">serpapi.com</a> erstellen.
-    </p>
+    <h2>Einstellungen <button class="btn-x" data-close="settings-modal">×</button></h2>
+
+    <!-- Cloudflare Worker Setup -->
+    <div class="setup-box">
+      <h3>Cloudflare Worker einrichten (einmalig, kostenlos)</h3>
+      <ol class="setup-steps">
+        <li><span><a href="https://workers.cloudflare.com" target="_blank" rel="noopener">workers.cloudflare.com</a> → kostenlosen Account erstellen</span></li>
+        <li><span>"Create a Worker" → Inhalt von <code>worker.js</code> einfügen → <b>Deploy</b></span></li>
+        <li><span>Im Worker-Dashboard: <b>Settings → Variables</b> → <code>SERPAPI_KEY</code> = API-Key eintragen (als Secret)</span></li>
+        <li><span>Die angezeigte Worker-URL unten eintragen (<code>https://….workers.dev</code>)</span></li>
+      </ol>
+      <div class="field" style="margin-bottom:0">
+        <label for="proxy-url-input">Worker-URL</label>
+        <input type="text" id="proxy-url-input" placeholder="https://skysearch.IHR-NAME.workers.dev" style="width:100%;padding:10px 12px;background:var(--surface);border:.5px solid var(--border-med);border-radius:var(--r);font-size:13px;color:var(--text-1);outline:none"/>
+      </div>
+    </div>
+
     <div class="field">
-      <label for="serp-key-input">SerpAPI Key</label>
-      <div class="key-display">
-        <input type="password" id="serp-key-input" placeholder="API-Key eingeben..." autocomplete="off"/>
+      <label for="serp-key-input">SerpAPI Key (Fallback – besser im Worker als Secret)</label>
+      <div class="key-row">
+        <input type="password" id="serp-key-input" placeholder="af4a185cedc89384..." autocomplete="off"/>
         <button class="key-toggle" id="key-toggle">Anzeigen</button>
       </div>
     </div>
-    <div class="form-row cols-2">
-      <div class="field">
-        <label for="currency-select">Währung</label>
+    <div class="form-row c2">
+      <div class="field"><label for="currency-select">Währung</label>
         <select id="currency-select">
-          <option value="EUR">EUR – Euro</option>
-          <option value="USD">USD – US-Dollar</option>
-          <option value="GBP">GBP – Pfund</option>
-          <option value="CHF">CHF – Franken</option>
+          <option value="EUR">EUR – Euro</option><option value="USD">USD – Dollar</option>
+          <option value="GBP">GBP – Pfund</option><option value="CHF">CHF – Franken</option>
         </select>
       </div>
-      <div class="field">
-        <label for="lang-select">Sprache</label>
+      <div class="field"><label for="lang-select">Sprache</label>
         <select id="lang-select">
-          <option value="de">Deutsch</option>
-          <option value="en">Englisch</option>
+          <option value="de">Deutsch</option><option value="en">Englisch</option>
           <option value="fr">Französisch</option>
         </select>
       </div>
     </div>
-    <button class="save-btn" id="save-settings-btn">Speichern</button>
-    <div id="settings-status"></div>
+    <button class="save-btn" id="save-btn">Speichern</button>
+    <div id="save-status"></div>
   </div>
 </div>
 
 <script>
 'use strict';
 
-/* ─── Konfiguration ──────────────────────────────────────────
-   SerpAPI-Endpunkt: https://serpapi.com/search?engine=google_flights
-   Der API-Key ist voreingestellt und kann in den Einstellungen
-   geändert werden. Er wird im localStorage gespeichert.
-───────────────────────────────────────────────────────────── */
-const SERP_ENDPOINT    = 'https://serpapi.com/search';
-const DEFAULT_SERP_KEY = 'af4a185cedc89384ec952f878f548278c2fd932f3061d855c1772aa9debfe5f6';
-const GOOGLE_CLIENT_ID = '876959021639-11ms2ssqqpgs50anvcie56n7ljhqjsmr.apps.googleusercontent.com';
+/* ══════════════════════════════════════════════════════════
+   SkySearch – Konfiguration
 
-/* ─── State ─────────────────────────────────────────────────*/
-const state = {
-  serpKey:  localStorage.getItem('serpapi_key')         || DEFAULT_SERP_KEY,
+   Architektur:
+     Browser (GitHub Pages)
+       → Cloudflare Worker (CORS-Proxy, kostenlos)
+           → SerpAPI https://serpapi.com/search?engine=google_flights
+
+   Der Worker fügt CORS-Header und den API-Key hinzu.
+   Der API-Key wird als Secret im Worker hinterlegt und ist
+   für den Browser NICHT sichtbar.
+══════════════════════════════════════════════════════════ */
+const DEFAULT_KEY      = 'af4a185cedc89384ec952f878f548278c2fd932f3061d855c1772aa9debfe5f6';
+const GOOGLE_CLIENT_ID = '876959021639-11ms2ssqqpgs50anvcie56n7ljhqjsmr.apps.googleusercontent.com'; // eslint-disable-line
+
+const st = {
+  proxyUrl: localStorage.getItem('proxy_url')           || '',
+  serpKey:  localStorage.getItem('serpapi_key')          || DEFAULT_KEY,
   currency: localStorage.getItem('currency')             || 'EUR',
   lang:     localStorage.getItem('lang')                 || 'de',
   user:     JSON.parse(localStorage.getItem('sky_user')  || 'null'),
-  tab:      'one-way',
-  segCount: 0,
+  tab:      'ow',
+  segN:     0,
 };
 
-/* ─── Helfer ─────────────────────────────────────────────── */
-const $  = id => document.getElementById(id);
-const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const today  = () => new Date().toISOString().split('T')[0];
-const plus7  = () => { const d=new Date(); d.setDate(d.getDate()+7); return d.toISOString().split('T')[0]; };
+const $   = id => document.getElementById(id);
+const esc = s  => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const today = () => new Date().toISOString().split('T')[0];
+const plus7 = () => { const d=new Date(); d.setDate(d.getDate()+7); return d.toISOString().split('T')[0]; };
 const initials = n => (n||'?').split(' ').slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('');
-const parseJwt = t => { try { return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); } catch { return {}; } };
+const jwt = t => { try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));}catch{return{};} };
 
-/* ─── Google OAuth ───────────────────────────────────────── */
-function handleGoogleCredential(response) {
-  const p = parseJwt(response.credential);
-  const user = { name: p.name||p.email, email: p.email, picture: p.picture||'', initials: initials(p.name||p.email) };
-  state.user = user;
-  localStorage.setItem('sky_user', JSON.stringify(user));
-  renderUserBadge(user);
+/* ── Google OAuth ─────────────────────────────────────────── */
+function handleGoogleCredential(r) {
+  const p = jwt(r.credential);
+  const u = { name:p.name||p.email, email:p.email, picture:p.picture||'', initials:initials(p.name||p.email) };
+  st.user = u;
+  localStorage.setItem('sky_user', JSON.stringify(u));
+  showUser(u);
 }
 window.handleGoogleCredential = handleGoogleCredential;
 
-function renderUserBadge(user) {
+function showUser(u) {
   $('google-signin-btn').style.display = 'none';
-  $('user-avatar-img').innerHTML = user.picture
-    ? `<img src="${esc(user.picture)}" alt="${esc(user.name)}">`
-    : user.initials;
-  $('user-display-name').textContent = user.name;
+  $('user-avatar').innerHTML = u.picture ? `<img src="${esc(u.picture)}" alt="">` : u.initials;
+  $('user-name').textContent = u.name;
   $('user-badge').style.display = 'flex';
   $('btn-logout').onclick = logout;
 }
-
 function logout() {
-  state.user = null;
-  localStorage.removeItem('sky_user');
-  if (window.google?.accounts?.id) google.accounts.id.disableAutoSelect();
+  st.user = null; localStorage.removeItem('sky_user');
+  if(window.google?.accounts?.id) google.accounts.id.disableAutoSelect();
   $('user-badge').style.display = 'none';
   $('google-signin-btn').style.display = 'block';
 }
 
-/* ─── Init ───────────────────────────────────────────────── */
+/* ── Init ─────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   $('ow-date').value = today();
   $('rt-dep').value  = today();
   $('rt-ret').value  = plus7();
 
-  // Tabs
-  document.querySelectorAll('.tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      state.tab = btn.dataset.tab;
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
-      $('tab-' + state.tab).style.display = 'block';
-      hideResults();
-    });
-  });
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+    st.tab = b.dataset.tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display='none');
+    $('tab-'+st.tab).style.display = 'block';
+    hideRes();
+  }));
 
-  // Swap (statische Buttons)
   document.querySelectorAll('.swap-btn[data-swap]').forEach(bindSwap);
 
-  // Multi-City
-  addSegment(); addSegment();
-  $('add-segment-btn').addEventListener('click', addSegment);
+  addSeg(); addSeg();
+  $('add-seg-btn').addEventListener('click', addSeg);
 
-  // Modal: Overlay-Klick & ESC
-  document.querySelectorAll('.modal-overlay').forEach(o => {
-    o.addEventListener('click', e => { if (e.target === o) o.style.display = 'none'; });
-  });
-  document.querySelectorAll('[data-close]').forEach(b => {
-    b.addEventListener('click', () => $(b.dataset.close).style.display = 'none');
-  });
+  document.querySelectorAll('.overlay').forEach(o =>
+    o.addEventListener('click', e => { if(e.target===o) o.style.display='none'; }));
+  document.querySelectorAll('[data-close]').forEach(b =>
+    b.addEventListener('click', () => $(b.dataset.close).style.display='none'));
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+    if(e.key==='Escape') document.querySelectorAll('.overlay').forEach(m => m.style.display='none');
   });
 
-  // Einstellungen
   $('btn-settings').addEventListener('click', openSettings);
-  $('warn-settings-btn').addEventListener('click', openSettings);
-  $('save-settings-btn').addEventListener('click', saveSettings);
-
-  // Key-Sichtbarkeit umschalten
+  $('warn-btn').addEventListener('click', openSettings);
+  $('save-btn').addEventListener('click', saveSettings);
   $('key-toggle').addEventListener('click', () => {
-    const inp = $('serp-key-input');
-    const show = inp.type === 'password';
-    inp.type = show ? 'text' : 'password';
+    const i = $('serp-key-input');
+    const show = i.type==='password';
+    i.type = show ? 'text' : 'password';
     $('key-toggle').textContent = show ? 'Verbergen' : 'Anzeigen';
   });
 
-  // Suche
   $('search-btn').addEventListener('click', doSearch);
-
-  // Session wiederherstellen
-  if (state.user) renderUserBadge(state.user);
-
-  // API-Warnung: nur zeigen wenn kein Key
-  $('api-warning').style.display = state.serpKey ? 'none' : 'flex';
+  if(st.user) showUser(st.user);
+  updateWarn();
 });
 
-/* ─── Swap ───────────────────────────────────────────────── */
+function updateWarn() {
+  $('warn-proxy').style.display = st.proxyUrl ? 'none' : 'flex';
+}
+
+/* ── Swap ─────────────────────────────────────────────────── */
 function bindSwap(btn) {
   btn.addEventListener('click', () => {
-    const [a, b] = btn.dataset.swap.split(',');
+    const [a,b] = btn.dataset.swap.split(',');
     [$(a).value, $(b).value] = [$(b).value, $(a).value];
   });
 }
 
-/* ─── Multi-City Segmente ────────────────────────────────── */
-function addSegment() {
-  state.segCount++;
-  const id  = state.segCount;
+/* ── Multi-City ───────────────────────────────────────────── */
+function addSeg() {
+  st.segN++;
+  const n = st.segN;
   const div = document.createElement('div');
-  div.className = 'multi-segment'; div.id = 'seg-' + id;
+  div.className = 'multi-seg'; div.id = 'seg-'+n;
   div.innerHTML = `
-    <div class="segment-label">Flug ${id}</div>
-    ${id > 2 ? '<button class="remove-seg" aria-label="Entfernen">×</button>' : ''}
+    <div class="seg-label">Flug ${n}</div>
+    ${n>2?'<button class="remove-seg" aria-label="Entfernen">×</button>':''}
     <div class="route-row">
-      <div class="field"><label for="sf${id}">Abflug</label><input type="text" id="sf${id}" placeholder="IATA oder Stadt" autocomplete="off"/></div>
-      <button class="swap-btn" data-swap="sf${id},st${id}" title="Tauschen">⇄</button>
-      <div class="field"><label for="st${id}">Ziel</label><input type="text" id="st${id}" placeholder="IATA oder Stadt" autocomplete="off"/></div>
+      <div class="field"><label>Abflug</label><input type="text" id="sf${n}" placeholder="IATA (z.B. BER)" autocomplete="off"/></div>
+      <button class="swap-btn" data-swap="sf${n},st${n}" title="Tauschen">⇄</button>
+      <div class="field"><label>Ziel</label><input type="text" id="st${n}" placeholder="IATA (z.B. LHR)" autocomplete="off"/></div>
     </div>
     <div class="field" style="margin-top:10px">
-      <label for="sd${id}">Datum</label>
-      <input type="date" id="sd${id}" value="${today()}"/>
+      <label>Datum</label>
+      <input type="date" id="sd${n}" value="${today()}"/>
     </div>`;
-  $('segments-container').appendChild(div);
+  $('seg-container').appendChild(div);
   const rm = div.querySelector('.remove-seg');
-  if (rm) rm.addEventListener('click', () => div.remove());
+  if(rm) rm.addEventListener('click', () => div.remove());
   div.querySelectorAll('.swap-btn[data-swap]').forEach(bindSwap);
 }
 
-/* ─── Einstellungen ──────────────────────────────────────── */
+/* ── Einstellungen ────────────────────────────────────────── */
 function openSettings() {
-  $('serp-key-input').value  = state.serpKey;
-  $('currency-select').value = state.currency;
-  $('lang-select').value     = state.lang;
-  $('settings-status').innerHTML = '';
+  $('proxy-url-input').value = st.proxyUrl;
+  $('serp-key-input').value  = st.serpKey !== DEFAULT_KEY ? st.serpKey : '';
+  $('currency-select').value = st.currency;
+  $('lang-select').value     = st.lang;
+  $('save-status').innerHTML = '';
   $('settings-modal').style.display = 'flex';
 }
 
 function saveSettings() {
-  state.serpKey  = $('serp-key-input').value.trim();
-  state.currency = $('currency-select').value;
-  state.lang     = $('lang-select').value;
-  localStorage.setItem('serpapi_key', state.serpKey);
-  localStorage.setItem('currency',    state.currency);
-  localStorage.setItem('lang',        state.lang);
-  $('settings-status').innerHTML = '<div class="status-msg ok">Gespeichert!</div>';
-  $('api-warning').style.display = state.serpKey ? 'none' : 'flex';
-  setTimeout(() => {
-    $('settings-status').innerHTML = '';
-    $('settings-modal').style.display = 'none';
-  }, 1000);
+  const raw = $('proxy-url-input').value.trim().replace(/\/+$/,'');
+  if(raw && !raw.startsWith('http')) {
+    $('save-status').innerHTML = '<div class="smsg err">Worker-URL muss mit https:// beginnen.</div>';
+    return;
+  }
+  st.proxyUrl = raw;
+  st.serpKey  = $('serp-key-input').value.trim() || DEFAULT_KEY;
+  st.currency = $('currency-select').value;
+  st.lang     = $('lang-select').value;
+  localStorage.setItem('proxy_url',   st.proxyUrl);
+  localStorage.setItem('serpapi_key', st.serpKey);
+  localStorage.setItem('currency',    st.currency);
+  localStorage.setItem('lang',        st.lang);
+  $('save-status').innerHTML = '<div class="smsg ok">Gespeichert!</div>';
+  updateWarn();
+  setTimeout(() => { $('save-status').innerHTML=''; $('settings-modal').style.display='none'; }, 1000);
 }
 
-/* ─── Suche ──────────────────────────────────────────────── */
+/* ── Suche ────────────────────────────────────────────────── */
 async function doSearch() {
-  if (!state.serpKey) { openSettings(); return; }
-
+  if(!st.proxyUrl) { openSettings(); return; }
   const params = buildParams();
-  if (!params) return;
+  if(!params) return;
 
   setSearching(true);
-  hideResults();
+  hideRes();
 
-  /*
-   * SerpAPI Google Flights Endpunkt:
-   *   https://serpapi.com/search?engine=google_flights&...
-   *
-   * CORS-Hinweis:
-   *   SerpAPI sendet Access-Control-Allow-Origin: * für authentifizierte
-   *   Anfragen. Die direkte Browseranfrage funktioniert damit von GitHub Pages.
-   *   Sollte es dennoch zu CORS-Fehlern kommen (abhängig vom Account-Plan),
-   *   kann alternativ der kostenlose Cloudflare-Worker-Proxy verwendet werden:
-   *   https://github.com/serpapi/public-demo-cors-proxy
-   */
   try {
+    /*
+     * Anfrage an Cloudflare Worker:
+     *   https://IHR-WORKER.workers.dev?engine=google_flights&departure_id=BER&...
+     *
+     * Der Worker leitet weiter an:
+     *   https://serpapi.com/search?engine=google_flights&api_key=SECRET&...
+     *
+     * Rückgabe: JSON von SerpAPI + Access-Control-Allow-Origin: *
+     */
     const qs  = new URLSearchParams({
       engine:  'google_flights',
-      api_key: state.serpKey,
-      ...params
+      api_key: st.serpKey,   // Worker überschreibt dies mit dem Server-Secret
+      ...params,
     }).toString();
 
-    const res  = await fetch(`${SERP_ENDPOINT}?${qs}`, {
-      method:  'GET',
-      headers: { 'Accept': 'application/json' }
-    });
+    const res = await fetch(`${st.proxyUrl}?${qs}`);
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || `HTTP ${res.status}`);
+    if(!res.ok) {
+      let msg = `HTTP ${res.status}`;
+      try { const j = await res.json(); msg = j.error || msg; } catch{}
+      throw new Error(msg);
     }
 
     const data = await res.json();
     renderResults(data);
-  } catch (err) {
-    renderError(`Fehler: ${err.message}`);
+
+  } catch(err) {
+    renderErr(`Fehler: ${err.message}`);
   }
 
   setSearching(false);
 }
 
 function buildParams() {
-  const base = { currency: state.currency, hl: state.lang };
+  const base = { currency:st.currency, hl:st.lang };
 
-  if (state.tab === 'one-way') {
-    const from = $('ow-from').value.trim();
-    const to   = $('ow-to').value.trim();
-    if (!from || !to) { alert('Bitte Abflug und Ziel angeben.'); return null; }
-    return { ...base, type: '2',
-      departure_id: from, arrival_id: to,
-      outbound_date: $('ow-date').value,
-      adults: $('ow-pax').value,
-      travel_class: $('ow-class').value,
-      ...($('ow-stops').value !== '' && { stops: $('ow-stops').value })
-    };
+  if(st.tab==='ow') {
+    const f=$('ow-from').value.trim(), t=$('ow-to').value.trim();
+    if(!f||!t){alert('Bitte Abflug und Ziel angeben (IATA-Code, z.B. BER oder LHR).');return null;}
+    return {...base, type:'2', departure_id:f, arrival_id:t,
+      outbound_date:$('ow-date').value, adults:$('ow-pax').value,
+      travel_class:$('ow-class').value,
+      ...($('ow-stops').value!==''&&{stops:$('ow-stops').value})};
   }
 
-  if (state.tab === 'round-trip') {
-    const from = $('rt-from').value.trim();
-    const to   = $('rt-to').value.trim();
-    if (!from || !to) { alert('Bitte Abflug und Ziel angeben.'); return null; }
-    return { ...base, type: '1',
-      departure_id: from, arrival_id: to,
-      outbound_date: $('rt-dep').value,
-      return_date:   $('rt-ret').value,
-      adults: $('rt-pax').value,
-      travel_class: $('rt-class').value,
-      ...($('rt-stops').value !== '' && { stops: $('rt-stops').value })
-    };
+  if(st.tab==='rt') {
+    const f=$('rt-from').value.trim(), t=$('rt-to').value.trim();
+    if(!f||!t){alert('Bitte Abflug und Ziel angeben (IATA-Code).');return null;}
+    return {...base, type:'1', departure_id:f, arrival_id:t,
+      outbound_date:$('rt-dep').value, return_date:$('rt-ret').value,
+      adults:$('rt-pax').value, travel_class:$('rt-class').value,
+      ...($('rt-stops').value!==''&&{stops:$('rt-stops').value})};
   }
 
-  // Multi-City
-  const segs = [];
-  document.querySelectorAll('.multi-segment').forEach(seg => {
-    const id = seg.id.replace('seg-', '');
-    const f  = $('sf' + id)?.value.trim();
-    const t  = $('st' + id)?.value.trim();
-    const d  = $('sd' + id)?.value;
-    if (f && t && d) segs.push({ f, t, d });
+  const segs=[];
+  document.querySelectorAll('.multi-seg').forEach(s => {
+    const n=s.id.replace('seg-','');
+    const f=$('sf'+n)?.value.trim(), t=$('st'+n)?.value.trim(), d=$('sd'+n)?.value;
+    if(f&&t&&d) segs.push({f,t,d});
   });
-  if (segs.length < 2) { alert('Bitte mindestens 2 Segmente ausfüllen.'); return null; }
-  return { ...base, type: '3',
-    departure_id:  segs.map(s => s.f).join(','),
-    arrival_id:    segs.map(s => s.t).join(','),
-    outbound_date: segs.map(s => s.d).join(','),
-    adults: $('mc-pax').value,
-    travel_class: $('mc-class').value,
-  };
+  if(segs.length<2){alert('Bitte mindestens 2 Segmente ausfüllen.');return null;}
+  return {...base, type:'3',
+    departure_id:segs.map(s=>s.f).join(','),
+    arrival_id:segs.map(s=>s.t).join(','),
+    outbound_date:segs.map(s=>s.d).join(','),
+    adults:$('mc-pax').value, travel_class:$('mc-class').value};
 }
 
-/* ─── Ergebnisse ─────────────────────────────────────────── */
+/* ── Ergebnisse ───────────────────────────────────────────── */
 function renderResults(data) {
-  if (data.error) { renderError(data.error); return; }
-
-  const flights = [...(data.best_flights || []), ...(data.other_flights || [])];
-  $('results-title').textContent = flights.length
-    ? `${flights.length} Flüge gefunden`
-    : 'Keine Flüge gefunden';
-  $('results-area').style.display = 'block';
-
-  if (!flights.length) {
-    $('results-list').innerHTML = '<div class="no-results">Keine Ergebnisse. Bitte IATA-Codes prüfen (z.B. BER, LHR, JFK).</div>';
+  if(data.error){renderErr(data.error);return;}
+  const fl=[...(data.best_flights||[]),...(data.other_flights||[])];
+  $('results-title').textContent = fl.length ? `${fl.length} Flüge gefunden` : 'Keine Flüge gefunden';
+  $('results').style.display='block';
+  if(!fl.length){
+    $('results-list').innerHTML='<div class="no-res">Keine Ergebnisse. Bitte IATA-Codes prüfen (z.B. BER, MUC, LHR, CDG, JFK).</div>';
     return;
   }
-
-  $('results-list').innerHTML = flights.slice(0, 12).map(f => {
-    const leg   = f.flights?.[0] || {};
-    const dep   = leg.departure_airport || {};
-    const arr   = leg.arrival_airport   || {};
-    const stops = f.layovers?.length ?? 0;
-    const dur   = f.total_duration
-      ? `${Math.floor(f.total_duration/60)}h ${f.total_duration%60}min` : '';
-    const airline = [leg.airline, leg.flight_number].filter(Boolean).join(' ');
-
-    return `<div class="flight-card">
+  $('results-list').innerHTML = fl.slice(0,12).map(f=>{
+    const leg=f.flights?.[0]||{};
+    const dep=leg.departure_airport||{}, arr=leg.arrival_airport||{};
+    const stops=f.layovers?.length??0;
+    const dur=f.total_duration?`${Math.floor(f.total_duration/60)}h ${f.total_duration%60}min`:'';
+    const airline=[leg.airline,leg.flight_number].filter(Boolean).join(' ');
+    return `<div class="fcard">
       <div>
-        <div class="flight-times">
-          ${esc(dep.time || '--:--')}
-          <span class="flight-arrow">→</span>
-          ${esc(arr.time || '--:--')}
-        </div>
-        <div class="flight-meta">
-          ${esc(airline || 'Airline unbekannt')}
-          · ${esc(dep.id||'?')} → ${esc(arr.id||'?')}
-          ${dur ? `· ${dur}` : ''}
-        </div>
-        <span class="flight-tag">${stops === 0 ? 'Direktflug' : stops + ' Stopp' + (stops>1?'s':'')}</span>
+        <div class="ftimes">${esc(dep.time||'--:--')}<span class="farrow">→</span>${esc(arr.time||'--:--')}</div>
+        <div class="fmeta">${esc(airline||'Airline unbekannt')} · ${esc(dep.id||'?')} → ${esc(arr.id||'?')}${dur?' · '+dur:''}</div>
+        <span class="ftag">${stops===0?'Direktflug':stops+' Stopp'+(stops>1?'s':'')}</span>
       </div>
-      <div class="flight-price">
-        ${f.price
-          ? `<span class="amount">${esc(String(f.price))} ${esc(state.currency)}</span><span class="per-person">pro Person</span>`
-          : '<span class="amount">Preis anfragen</span>'}
+      <div class="fprice">${f.price
+        ?`<span class="amt">${esc(String(f.price))} ${esc(st.currency)}</span><span class="pp">pro Person</span>`
+        :'<span class="amt">Preis anfragen</span>'}
       </div>
     </div>`;
   }).join('');
 }
 
-function renderError(msg) {
-  $('results-area').style.display = 'block';
-  $('results-list').innerHTML = `<div class="no-results error">${esc(msg)}</div>`;
+function renderErr(msg) {
+  $('results').style.display='block';
+  $('results-list').innerHTML=`<div class="no-res err">${esc(msg)}</div>`;
 }
-
-function hideResults() { $('results-area').style.display = 'none'; }
-
+function hideRes() { $('results').style.display='none'; }
 function setSearching(on) {
-  $('search-btn').disabled = on;
-  $('search-btn').innerHTML = on
-    ? 'Suche läuft <span class="loading-dots"><span></span><span></span><span></span></span>'
-    : 'Flüge suchen';
+  $('search-btn').disabled=on;
+  $('search-btn').innerHTML=on
+    ?'Suche läuft <span class="dots"><span></span><span></span><span></span></span>'
+    :'Flüge suchen';
 }
 </script>
 </body>
