@@ -14,15 +14,16 @@
       --text-1:#111827; --text-2:#6b7280; --text-3:#9ca3af;
       --r:8px; --rl:16px;
       --sh:0 1px 3px rgba(0,0,0,.08); --shm:0 4px 16px rgba(0,0,0,.10);
+      --green:#16a34a; --green-light:#dcfce7;
     }
     @media(prefers-color-scheme:dark){:root{
       --bg:#0f1117; --surface:#1a1d27; --surface-2:#23263a;
       --border:rgba(255,255,255,.08); --border-med:rgba(255,255,255,.16);
       --text-1:#f0f2f7; --text-2:#9ca3af; --text-3:#6b7280;
-      --sky-light:rgba(26,109,255,.18);
+      --sky-light:rgba(26,109,255,.18); --green-light:rgba(22,163,74,.18);
     }}
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:15px;line-height:1.5}
-    .app{max-width:920px;margin:0 auto;padding:1.5rem 1rem 4rem}
+    .app{max-width:940px;margin:0 auto;padding:1.5rem 1rem 4rem}
 
     /* topbar */
     .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:10px}
@@ -31,8 +32,6 @@
     .topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
     .btn-icon{display:flex;align-items:center;gap:6px;padding:7px 12px;background:var(--surface);border:.5px solid var(--border-med);border-radius:var(--r);font-size:13px;color:var(--text-2);cursor:pointer;transition:background .15s}
     .btn-icon:hover{background:var(--surface-2)}
-
-    /* user badge */
     .user-badge{display:flex;align-items:center;gap:8px;background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:5px 10px}
     .user-avatar{width:28px;height:28px;border-radius:50%;background:var(--sky);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;overflow:hidden;flex-shrink:0}
     .user-avatar img{width:100%;height:100%;object-fit:cover}
@@ -64,6 +63,7 @@
     .form-row{display:grid;gap:12px;margin-bottom:12px}
     .form-row.c2{grid-template-columns:1fr 1fr}
     .form-row.c3{grid-template-columns:1fr 1fr 1fr}
+    .form-row.c4{grid-template-columns:1fr 1fr 1fr 1fr}
     .route-row{display:flex;align-items:flex-end;gap:8px;margin-bottom:12px}
     .route-row .field{flex:1}
     .field{display:flex;flex-direction:column;gap:5px}
@@ -75,6 +75,28 @@
     .swap-btn{flex-shrink:0;width:38px;height:40px;align-self:flex-end;background:var(--surface-2);border:.5px solid var(--border-med);border-radius:var(--r);cursor:pointer;font-size:16px;color:var(--text-2);display:flex;align-items:center;justify-content:center;transition:all .15s}
     .swap-btn:hover{background:var(--sky-light);color:var(--sky);border-color:var(--sky)}
 
+    /* custom date input */
+    .date-input{position:relative}
+    .date-input input[type="date"]{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+    .date-display{width:100%;padding:10px 12px;background:var(--surface-2);border:.5px solid var(--border-med);border-radius:var(--r);font-size:14px;color:var(--text-1);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:border-color .15s,box-shadow .15s;user-select:none}
+    .date-display.placeholder{color:var(--text-3)}
+    .date-display:hover,.date-display:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(26,109,255,.12);outline:none}
+    .date-cal-icon{opacity:.5;font-size:13px}
+    .datepicker{position:absolute;z-index:100;background:var(--surface);border:.5px solid var(--border-med);border-radius:var(--rl);box-shadow:var(--shm);padding:12px;width:280px;top:calc(100% + 4px);left:0}
+    .datepicker.right{left:auto;right:0}
+    .dp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .dp-nav{background:none;border:none;cursor:pointer;color:var(--text-2);font-size:18px;padding:2px 8px;border-radius:4px;transition:background .15s}
+    .dp-nav:hover{background:var(--surface-2)}
+    .dp-title{font-size:13px;font-weight:600;color:var(--text-1)}
+    .dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+    .dp-dow{font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-3);text-align:center;padding:4px 0}
+    .dp-day{font-size:13px;text-align:center;padding:6px 0;border-radius:6px;cursor:pointer;border:none;background:none;color:var(--text-1);transition:background .1s}
+    .dp-day:hover{background:var(--surface-2)}
+    .dp-day.today{font-weight:700;color:var(--sky)}
+    .dp-day.selected{background:var(--sky);color:#fff;font-weight:600}
+    .dp-day.other-month{color:var(--text-3)}
+    .dp-day.disabled{color:var(--text-3);opacity:.4;cursor:not-allowed;pointer-events:none}
+
     /* multi-city */
     .multi-seg{position:relative;border:.5px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px}
     .seg-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:10px}
@@ -82,6 +104,7 @@
     .remove-seg:hover{color:var(--text-1);background:var(--surface-2)}
     .add-seg-btn{width:100%;padding:10px;background:none;border:.5px dashed var(--border-med);border-radius:var(--r);font-size:13px;color:var(--text-2);cursor:pointer;margin-bottom:14px;transition:all .15s}
     .add-seg-btn:hover{border-color:var(--sky);color:var(--sky);background:var(--sky-light)}
+    .trip-info{background:var(--sky-light);border:.5px solid rgba(26,109,255,.25);border-radius:var(--r);padding:10px 14px;font-size:12px;color:#0047cc;margin-bottom:14px}
 
     /* search */
     .search-btn{width:100%;padding:13px;margin-top:6px;background:var(--sky);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
@@ -97,24 +120,42 @@
     .results{margin-top:1.5rem}
     .results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
     .results-header h3{font-size:15px;font-weight:600}
-    .sort-bar{display:flex;align-items:center;gap:4px}
+    .sort-bar{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
     .sort-label{font-size:12px;color:var(--text-2);margin-right:2px}
     .sort-btn{padding:5px 10px;border:.5px solid var(--border-med);border-radius:6px;background:none;font-size:12px;color:var(--text-2);cursor:pointer;transition:all .15s}
     .sort-btn:hover{background:var(--surface-2)}
     .sort-btn.active{background:var(--sky);color:#fff;border-color:var(--sky);font-weight:500}
-    .fcard{display:flex;align-items:center;justify-content:space-between;gap:1rem;background:var(--surface);border:.5px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-bottom:10px;box-shadow:var(--sh);transition:box-shadow .15s}
+
+    /* flight card */
+    .fcard{background:var(--surface);border:.5px solid var(--border);border-radius:12px;margin-bottom:12px;box-shadow:var(--sh);overflow:hidden;transition:box-shadow .15s}
     .fcard:hover{box-shadow:var(--shm)}
+    .fcard-legs{padding:0}
+    .fleg{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:14px 1.25rem}
+    .fleg+.fleg{border-top:.5px solid var(--border)}
+    .fleg-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:4px;margin-bottom:6px}
+    .fleg-label.outbound{background:var(--sky-light);color:var(--sky)}
+    .fleg-label.ret{background:var(--green-light);color:var(--green)}
     .fcard-left{display:flex;align-items:center;gap:12px;min-width:0}
     .airline-logo{width:36px;height:36px;border-radius:8px;border:.5px solid var(--border);object-fit:contain;background:#fff;flex-shrink:0;padding:3px}
-    .airline-fallback{width:36px;height:36px;border-radius:8px;border:.5px solid var(--border);background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--text-2);letter-spacing:.02em}
+    .airline-fallback{width:36px;height:36px;border-radius:8px;border:.5px solid var(--border);background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--text-2)}
     .ftimes{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600}
     .farrow{color:var(--text-3);font-size:13px}
-    .fmeta{font-size:12px;color:var(--text-2);margin-top:3px}
-    .fdur{font-style:italic;color:var(--text-3);font-size:12px}
-    .ftag{display:inline-block;background:var(--sky-light);color:var(--sky);font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;margin-top:6px}
-    .fprice{text-align:right;flex-shrink:0}
-    .fprice .amt{font-size:17px;font-weight:700;color:var(--sky)}
-    .fprice .pp{display:block;font-size:11px;color:var(--text-3);margin-top:2px}
+    .fmeta{font-size:12px;color:var(--text-2);margin-top:2px}
+    .fdur{font-style:italic;color:var(--text-3);font-size:12px;margin-left:4px}
+    .ftag{display:inline-block;background:var(--sky-light);color:var(--sky);font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;margin-top:5px}
+    .fcard-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 1.25rem;border-top:.5px solid var(--border);background:var(--surface-2)}
+    .fprice .amt{font-size:18px;font-weight:700;color:var(--sky)}
+    .fprice .pp{font-size:11px;color:var(--text-3);margin-left:4px}
+    .btn-book{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:var(--sky);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .15s}
+    .btn-book:hover{background:var(--sky-dark)}
+    .btn-book svg{flex-shrink:0}
+
+    /* trip planner result */
+    .trip-result{background:var(--surface);border:.5px solid var(--border);border-radius:12px;margin-bottom:12px;box-shadow:var(--sh)}
+    .trip-result-header{display:flex;align-items:center;justify-content:space-between;padding:12px 1.25rem;border-bottom:.5px solid var(--border);background:var(--sky-light)}
+    .trip-result-header .total{font-size:15px;font-weight:700;color:var(--sky)}
+    .trip-result-header .route{font-size:13px;color:#0047cc}
+
     .no-res{text-align:center;padding:2.5rem;color:var(--text-2);font-size:14px}
     .no-res.err{color:#c0392b}
 
@@ -123,8 +164,6 @@
     .modal{background:var(--surface);border:.5px solid var(--border);border-radius:var(--rl);padding:1.5rem;width:100%;max-width:480px;box-shadow:var(--shm);max-height:90vh;overflow-y:auto}
     .modal h2{font-size:17px;font-weight:600;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between}
     .modal .field{margin-bottom:14px}
-    .modal-note{font-size:12px;color:var(--text-2);line-height:1.6;margin-bottom:1rem}
-    .modal-note a{color:var(--sky)}
     .key-row{display:flex;gap:8px}
     .key-row input{flex:1}
     .key-toggle{background:none;border:.5px solid var(--border-med);border-radius:var(--r);padding:10px;cursor:pointer;color:var(--text-2);font-size:12px;white-space:nowrap;transition:background .15s}
@@ -134,28 +173,21 @@
     .smsg{font-size:12px;padding:8px 12px;border-radius:6px;margin-top:10px;text-align:center}
     .smsg.ok{background:#eaf6ed;color:#1a7a3a}
     .smsg.err{background:#fceaea;color:#c0392b}
-
-    /* proxy setup box */
     .setup-box{background:var(--sky-light);border:.5px solid rgba(26,109,255,.25);border-radius:var(--r);padding:14px;margin-bottom:16px}
-    .setup-box h3{font-size:13px;font-weight:600;color:#0047cc;margin-bottom:12px}
-    .setup-steps{list-style:none;counter-reset:sc}
-    .setup-steps li{counter-increment:sc;display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--text-1);margin-bottom:10px}
-    .setup-steps li::before{content:counter(sc);flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--sky);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
-    .setup-steps a{color:var(--sky)}
+    .setup-box h3{font-size:13px;font-weight:600;color:#0047cc;margin-bottom:8px}
     code{background:var(--surface-2);border:.5px solid var(--border);border-radius:4px;padding:1px 5px;font-size:12px;font-family:monospace;color:var(--text-1)}
 
-    @media(max-width:600px){
-      .form-row.c2,.form-row.c3{grid-template-columns:1fr}
+    @media(max-width:640px){
+      .form-row.c2,.form-row.c3,.form-row.c4{grid-template-columns:1fr}
       .tabs{flex-direction:column} .tab{justify-content:flex-start}
-      .fcard{flex-direction:column;align-items:flex-start} .fprice{text-align:left}
       .hero h1{font-size:22px}
+      .fleg{flex-direction:column;align-items:flex-start}
     }
   </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- Topbar -->
   <header class="topbar">
     <div class="logo">
       <div class="logo-icon">
@@ -188,23 +220,19 @@
     </div>
   </header>
 
-  <!-- Hero -->
   <div class="hero">
     <h1>Flüge suchen &amp; buchen</h1>
     <p>Echte Flugdaten via Google Flights &amp; SerpAPI</p>
   </div>
 
-  <!-- Search Card -->
   <div class="card">
     <div class="banner warn" id="warn-proxy" style="display:none">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
-      Kein Cloudflare-Worker-URL konfiguriert.
-      <button id="warn-btn">Jetzt einrichten →</button>
+      Kein Proxy konfiguriert. <button id="warn-btn">Einstellungen →</button>
     </div>
 
-    <!-- Tabs -->
     <div class="tabs" role="tablist">
       <button class="tab active" role="tab" data-tab="ow">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -214,9 +242,7 @@
       </button>
       <button class="tab" role="tab" data-tab="rt">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <polyline points="17 1 21 5 17 9"/>
-          <path d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/>
-          <path d="M21 13v2a4 4 0 01-4 4H3"/>
+          <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/>
         </svg>
         Hin- &amp; Rückflug
       </button>
@@ -224,19 +250,19 @@
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="10"/><polyline points="2 12 12 2 22 12"/>
         </svg>
-        Multi-City
+        Trip-Planer
       </button>
     </div>
 
     <!-- Einfacher Flug -->
     <div id="tab-ow" class="tab-panel">
       <div class="route-row">
-        <div class="field"><label for="ow-from">Abflug</label><input type="text" id="ow-from" placeholder="IATA-Code (z.B. BER, MUC)" autocomplete="off"/></div>
+        <div class="field"><label for="ow-from">Abflug</label><input type="text" id="ow-from" placeholder="IATA (z.B. BER)" autocomplete="off"/></div>
         <button class="swap-btn" data-swap="ow-from,ow-to" title="Tauschen">⇄</button>
-        <div class="field"><label for="ow-to">Ziel</label><input type="text" id="ow-to" placeholder="IATA-Code (z.B. LHR, JFK)" autocomplete="off"/></div>
+        <div class="field"><label for="ow-to">Ziel</label><input type="text" id="ow-to" placeholder="IATA (z.B. LHR)" autocomplete="off"/></div>
       </div>
       <div class="form-row c2">
-        <div class="field"><label for="ow-date">Datum</label><input type="date" id="ow-date"/></div>
+        <div class="field"><label>Datum</label><div class="date-input" id="di-ow-date"><div class="date-display placeholder" tabindex="0">TT.MM.JJJJ <span class="date-cal-icon">📅</span></div></div></div>
         <div class="field"><label for="ow-pax">Passagiere</label>
           <select id="ow-pax">
             <option value="1">1 Passagier</option><option value="2">2 Passagiere</option>
@@ -247,15 +273,10 @@
       </div>
       <div class="form-row c2">
         <div class="field"><label for="ow-class">Klasse</label>
-          <select id="ow-class">
-            <option value="1">Economy</option><option value="2">Premium Economy</option>
-            <option value="3">Business</option><option value="4">First Class</option>
-          </select>
+          <select id="ow-class"><option value="1">Economy</option><option value="2">Premium Economy</option><option value="3">Business</option><option value="4">First Class</option></select>
         </div>
         <div class="field"><label for="ow-stops">Stopps</label>
-          <select id="ow-stops">
-            <option value="">Egal</option><option value="0">Direktflug</option><option value="1">Max. 1 Stopp</option>
-          </select>
+          <select id="ow-stops"><option value="">Egal</option><option value="0">Direktflug</option><option value="1">Max. 1 Stopp</option></select>
         </div>
       </div>
     </div>
@@ -263,51 +284,49 @@
     <!-- Hin- & Rückflug -->
     <div id="tab-rt" class="tab-panel" style="display:none">
       <div class="route-row">
-        <div class="field"><label for="rt-from">Abflug</label><input type="text" id="rt-from" placeholder="IATA-Code (z.B. BER)" autocomplete="off"/></div>
+        <div class="field"><label for="rt-from">Abflug</label><input type="text" id="rt-from" placeholder="IATA (z.B. BER)" autocomplete="off"/></div>
         <button class="swap-btn" data-swap="rt-from,rt-to" title="Tauschen">⇄</button>
-        <div class="field"><label for="rt-to">Ziel</label><input type="text" id="rt-to" placeholder="IATA-Code (z.B. LHR)" autocomplete="off"/></div>
+        <div class="field"><label for="rt-to">Ziel</label><input type="text" id="rt-to" placeholder="IATA (z.B. LHR)" autocomplete="off"/></div>
       </div>
       <div class="form-row c3">
-        <div class="field"><label for="rt-dep">Hinflug</label><input type="date" id="rt-dep"/></div>
-        <div class="field"><label for="rt-ret">Rückflug</label><input type="date" id="rt-ret"/></div>
+        <div class="field"><label>Hinflug</label><div class="date-input" id="di-rt-dep"><div class="date-display placeholder" tabindex="0">TT.MM.JJJJ <span class="date-cal-icon">📅</span></div></div></div>
+        <div class="field"><label>Rückflug</label><div class="date-input" id="di-rt-ret"><div class="date-display placeholder" tabindex="0">TT.MM.JJJJ <span class="date-cal-icon">📅</span></div></div></div>
         <div class="field"><label for="rt-pax">Passagiere</label>
-          <select id="rt-pax">
-            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-          </select>
+          <select id="rt-pax"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select>
         </div>
       </div>
       <div class="form-row c2">
         <div class="field"><label for="rt-class">Klasse</label>
-          <select id="rt-class">
-            <option value="1">Economy</option><option value="2">Premium Economy</option>
-            <option value="3">Business</option><option value="4">First Class</option>
-          </select>
+          <select id="rt-class"><option value="1">Economy</option><option value="2">Premium Economy</option><option value="3">Business</option><option value="4">First Class</option></select>
         </div>
         <div class="field"><label for="rt-stops">Stopps</label>
-          <select id="rt-stops">
-            <option value="">Egal</option><option value="0">Direktflug</option><option value="1">Max. 1 Stopp</option>
-          </select>
+          <select id="rt-stops"><option value="">Egal</option><option value="0">Direktflug</option><option value="1">Max. 1 Stopp</option></select>
         </div>
       </div>
     </div>
 
-    <!-- Multi-City -->
+    <!-- Trip-Planer (Multi-City) -->
     <div id="tab-mc" class="tab-panel" style="display:none">
+      <div class="trip-info">
+        <strong>Trip-Planer:</strong> Start- und Endort angeben + beliebige Zwischenstopps. Die App sucht die günstigste Flugkombination für die gesamte Route.
+      </div>
+      <div class="form-row c2">
+        <div class="field"><label for="mc-origin">Reisestart (Heimatflughafen)</label><input type="text" id="mc-origin" placeholder="IATA (z.B. BER)" autocomplete="off"/></div>
+        <div class="field"><label for="mc-dest">Reiseende (Rückflug nach)</label><input type="text" id="mc-dest" placeholder="IATA – leer = Heimatflughafen" autocomplete="off"/></div>
+      </div>
+      <div class="form-row c2">
+        <div class="field"><label>Reisebeginn</label><div class="date-input" id="di-mc-start"><div class="date-display placeholder" tabindex="0">TT.MM.JJJJ <span class="date-cal-icon">📅</span></div></div></div>
+        <div class="field"><label>Reiseende (spätester Rückflug)</label><div class="date-input" id="di-mc-end"><div class="date-display placeholder" tabindex="0">TT.MM.JJJJ <span class="date-cal-icon">📅</span></div></div></div>
+      </div>
+      <p style="font-size:12px;color:var(--text-2);margin-bottom:10px">Zwischenstopps (Reihenfolge der Städte):</p>
       <div id="seg-container"></div>
-      <button class="add-seg-btn" id="add-seg-btn">+ Weiteren Stopp hinzufügen</button>
+      <button class="add-seg-btn" id="add-seg-btn">+ Stopp hinzufügen</button>
       <div class="form-row c2">
         <div class="field"><label for="mc-pax">Passagiere</label>
-          <select id="mc-pax">
-            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-            <option value="4">4</option><option value="5">5</option>
-          </select>
+          <select id="mc-pax"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
         </div>
         <div class="field"><label for="mc-class">Klasse</label>
-          <select id="mc-class">
-            <option value="1">Economy</option><option value="2">Premium Economy</option>
-            <option value="3">Business</option><option value="4">First Class</option>
-          </select>
+          <select id="mc-class"><option value="1">Economy</option><option value="2">Premium Economy</option><option value="3">Business</option><option value="4">First Class</option></select>
         </div>
       </div>
     </div>
@@ -315,7 +334,6 @@
     <button class="search-btn" id="search-btn">Flüge suchen</button>
   </div>
 
-  <!-- Ergebnisse -->
   <section class="results" id="results" style="display:none">
     <div class="results-header">
       <h3 id="results-title"></h3>
@@ -332,31 +350,22 @@
   </section>
 </div>
 
-<!-- Einstellungen Modal -->
+<!-- Settings Modal -->
 <div class="overlay" id="settings-modal" style="display:none">
   <div class="modal">
     <h2>Einstellungen <button class="btn-x" data-close="settings-modal">×</button></h2>
-
-    <!-- Proxy Info -->
     <div class="setup-box">
-      <h3>Proxy-Konfiguration</h3>
-      <p style="font-size:12px;color:#0047cc;margin-bottom:12px">
-        Auf Cloudflare Pages wird automatisch <code>/api/flights</code> als Proxy verwendet.<br>
-        Für lokale Tests oder eigene Server hier die URL anpassen.
-      </p>
-      <div class="field" style="margin-bottom:8px">
+      <h3>Proxy-Konfiguration (Cloudflare Worker/Pages Function)</h3>
+      <p style="font-size:12px;color:#0047cc;margin-bottom:10px">Auf Cloudflare Pages automatisch <code>/api/flights</code>. Für eigene Worker die URL unten eintragen.</p>
+      <div class="field" style="margin-bottom:0">
         <label for="proxy-url-input">Proxy-URL</label>
-        <input type="text" id="proxy-url-input" placeholder="/api/flights" style="width:100%;padding:10px 12px;background:var(--surface);border:.5px solid var(--border-med);border-radius:var(--r);font-size:13px;color:var(--text-1);outline:none"/>
+        <input type="text" id="proxy-url-input" placeholder="https://xxx.workers.dev oder /api/flights" style="width:100%;padding:10px 12px;background:var(--surface);border:.5px solid var(--border-med);border-radius:var(--r);font-size:13px;color:var(--text-1);outline:none"/>
       </div>
-      <p style="font-size:11px;color:var(--text-2)">
-        SerpAPI-Key als Secret hinterlegen: Cloudflare Dashboard → Pages → Ihr Projekt → <b>Settings → Environment Variables</b> → <code>SERPAPI_KEY</code>
-      </p>
     </div>
-
     <div class="field">
-      <label for="serp-key-input">SerpAPI Key (Fallback – besser im Worker als Secret)</label>
+      <label for="serp-key-input">SerpAPI Key (Fallback)</label>
       <div class="key-row">
-        <input type="password" id="serp-key-input" placeholder="af4a185cedc89384..." autocomplete="off"/>
+        <input type="password" id="serp-key-input" placeholder="API-Key..." autocomplete="off"/>
         <button class="key-toggle" id="key-toggle">Anzeigen</button>
       </div>
     </div>
@@ -382,44 +391,129 @@
 <script>
 'use strict';
 
-/* ══════════════════════════════════════════════════════════
-   SkySearch – Konfiguration
-
-   Architektur:
-     Browser (GitHub Pages)
-       → Cloudflare Worker (CORS-Proxy, kostenlos)
-           → SerpAPI https://serpapi.com/search?engine=google_flights
-
-   Der Worker fügt CORS-Header und den API-Key hinzu.
-   Der API-Key wird als Secret im Worker hinterlegt und ist
-   für den Browser NICHT sichtbar.
-══════════════════════════════════════════════════════════ */
-const DEFAULT_KEY      = 'af4a185cedc89384ec952f878f548278c2fd932f3061d855c1772aa9debfe5f6';
-const GOOGLE_CLIENT_ID = '876959021639-11ms2ssqqpgs50anvcie56n7ljhqjsmr.apps.googleusercontent.com'; // eslint-disable-line
-
-// Proxy-URL: auf Cloudflare Pages läuft die Function unter /api/flights
-// auf der gleichen Domain – kein separater Worker nötig.
-// Manuell überschreibbar in den Einstellungen (für lokale Tests oder eigene Proxies).
-const AUTO_PROXY = window.location.origin + '/api/flights';
+const DEFAULT_KEY = 'af4a185cedc89384ec952f878f548278c2fd932f3061d855c1772aa9debfe5f6';
+const AUTO_PROXY  = window.location.origin + '/api/flights';
 
 const st = {
-  proxyUrl: localStorage.getItem('proxy_url')           || AUTO_PROXY,
-  serpKey:  localStorage.getItem('serpapi_key')          || DEFAULT_KEY,
-  currency: localStorage.getItem('currency')             || 'EUR',
-  lang:     localStorage.getItem('lang')                 || 'de',
-  user:     JSON.parse(localStorage.getItem('sky_user')  || 'null'),
+  proxyUrl: localStorage.getItem('proxy_url')          || AUTO_PROXY,
+  serpKey:  localStorage.getItem('serpapi_key')         || DEFAULT_KEY,
+  currency: localStorage.getItem('currency')            || 'EUR',
+  lang:     localStorage.getItem('lang')                || 'de',
+  user:     JSON.parse(localStorage.getItem('sky_user') || 'null'),
   tab:      'ow',
   segN:     0,
 };
 
 const $   = id => document.getElementById(id);
 const esc = s  => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const today = () => new Date().toISOString().split('T')[0];
-const plus7 = () => { const d=new Date(); d.setDate(d.getDate()+7); return d.toISOString().split('T')[0]; };
-const initials = n => (n||'?').split(' ').slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('');
+const plus = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
+const isoToDE = iso => { if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}.${m}.${y}`; };
+const deToIso = de  => { if(!de||!de.includes('.')) return ''; const [d,m,y]=de.split('.'); return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`; };
+const initials = n  => (n||'?').split(' ').slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('');
 const jwt = t => { try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));}catch{return{};} };
 
-/* ── Google OAuth ─────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   DATEPICKER – zeigt dd.mm.yyyy, gibt ISO zurück
+══════════════════════════════════════════════════════════ */
+const dpState = {}; // id → {year, month, value(ISO), minIso}
+
+function initDatepicker(wrapperId, defaultIso, minIso) {
+  const wrap = $(wrapperId);
+  if(!wrap) return;
+  const disp = wrap.querySelector('.date-display');
+  dpState[wrapperId] = { year: null, month: null, value: defaultIso||'', minIso: minIso||'' };
+  if(defaultIso) { disp.textContent=''; disp.classList.remove('placeholder'); disp.innerHTML = isoToDE(defaultIso)+' <span class="date-cal-icon">📅</span>'; }
+
+  disp.addEventListener('click', e => { e.stopPropagation(); toggleDp(wrapperId); });
+  disp.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') toggleDp(wrapperId); });
+}
+
+function toggleDp(id) {
+  // close all others
+  document.querySelectorAll('.datepicker').forEach(el => { if(el.dataset.for!==id) el.remove(); });
+  const existing = document.querySelector(`.datepicker[data-for="${id}"]`);
+  if(existing) { existing.remove(); return; }
+  openDp(id);
+}
+
+function openDp(id) {
+  const s    = dpState[id];
+  const now  = new Date();
+  s.year  = s.year  || (s.value ? parseInt(s.value.split('-')[0]) : now.getFullYear());
+  s.month = s.month || (s.value ? parseInt(s.value.split('-')[1])-1 : now.getMonth());
+  renderDp(id);
+}
+
+function renderDp(id) {
+  document.querySelector(`.datepicker[data-for="${id}"]`)?.remove();
+  const s    = dpState[id];
+  const wrap = $(id);
+  const dp   = document.createElement('div');
+  dp.className = 'datepicker';
+  dp.dataset.for = id;
+  // position right if close to right edge
+  const rect = wrap.getBoundingClientRect();
+  if(rect.left > window.innerWidth/2) dp.classList.add('right');
+
+  const months = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  const dows   = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+  const first  = new Date(s.year, s.month, 1);
+  const last   = new Date(s.year, s.month+1, 0);
+  let startDow = first.getDay()-1; if(startDow<0) startDow=6;
+
+  const todayIso = new Date().toISOString().split('T')[0];
+  const minIso   = s.minIso || todayIso;
+
+  let grid = `<div class="dp-grid">${dows.map(d=>`<div class="dp-dow">${d}</div>`).join('')}`;
+  for(let i=0;i<startDow;i++) grid+=`<div></div>`;
+  for(let d=1;d<=last.getDate();d++){
+    const iso  = `${s.year}-${String(s.month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    let cls    = 'dp-day';
+    if(iso===todayIso) cls+=' today';
+    if(iso===s.value)  cls+=' selected';
+    if(iso<minIso)     cls+=' disabled';
+    grid+=`<button class="${cls}" data-iso="${iso}">${d}</button>`;
+  }
+  grid+='</div>';
+
+  dp.innerHTML = `
+    <div class="dp-header">
+      <button class="dp-nav" data-dp-prev="${id}">‹</button>
+      <span class="dp-title">${months[s.month]} ${s.year}</span>
+      <button class="dp-nav" data-dp-next="${id}">›</button>
+    </div>${grid}`;
+
+  wrap.style.position='relative';
+  wrap.appendChild(dp);
+
+  dp.addEventListener('click', e => {
+    e.stopPropagation();
+    const btn = e.target.closest('[data-dp-prev],[data-dp-next],[data-iso]');
+    if(!btn) return;
+    if(btn.dataset.dpPrev) { s.month--; if(s.month<0){s.month=11;s.year--;} renderDp(id); }
+    else if(btn.dataset.dpNext) { s.month++; if(s.month>11){s.month=0;s.year++;} renderDp(id); }
+    else if(btn.dataset.iso) {
+      selectDate(id, btn.dataset.iso);
+      dp.remove();
+    }
+  });
+}
+
+function selectDate(id, iso) {
+  dpState[id].value = iso;
+  const disp = $(id)?.querySelector('.date-display');
+  if(disp) { disp.innerHTML = isoToDE(iso)+' <span class="date-cal-icon">📅</span>'; disp.classList.remove('placeholder'); }
+}
+
+function getDate(id) { return dpState[id]?.value || ''; }
+
+// close picker on outside click
+document.addEventListener('click', () => document.querySelectorAll('.datepicker').forEach(el=>el.remove()));
+
+/* ══════════════════════════════════════════════════════════
+   GOOGLE OAUTH
+══════════════════════════════════════════════════════════ */
 function handleGoogleCredential(r) {
   const p = jwt(r.credential);
   const u = { name:p.name||p.email, email:p.email, picture:p.picture||'', initials:initials(p.name||p.email) };
@@ -430,318 +524,385 @@ function handleGoogleCredential(r) {
 window.handleGoogleCredential = handleGoogleCredential;
 
 function showUser(u) {
-  $('google-signin-btn').style.display = 'none';
+  $('google-signin-btn').style.display='none';
   $('user-avatar').innerHTML = u.picture ? `<img src="${esc(u.picture)}" alt="">` : u.initials;
   $('user-name').textContent = u.name;
-  $('user-badge').style.display = 'flex';
+  $('user-badge').style.display='flex';
   $('btn-logout').onclick = logout;
 }
 function logout() {
-  st.user = null; localStorage.removeItem('sky_user');
-  if(window.google?.accounts?.id) google.accounts.id.disableAutoSelect();
-  $('user-badge').style.display = 'none';
-  $('google-signin-btn').style.display = 'block';
+  st.user=null; localStorage.removeItem('sky_user');
+  window.google?.accounts?.id?.disableAutoSelect?.();
+  $('user-badge').style.display='none';
+  $('google-signin-btn').style.display='block';
 }
 
-/* ── Init ─────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
-  $('ow-date').value = today();
-  $('rt-dep').value  = today();
-  $('rt-ret').value  = plus7();
+  const todayIso = new Date().toISOString().split('T')[0];
+  const plus7    = plus(new Date(),7).toISOString().split('T')[0];
+  const plus14   = plus(new Date(),14).toISOString().split('T')[0];
 
-  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
-    st.tab = b.dataset.tab;
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  // Init datepickers
+  initDatepicker('di-ow-date', todayIso, todayIso);
+  initDatepicker('di-rt-dep',  todayIso, todayIso);
+  initDatepicker('di-rt-ret',  plus7,    todayIso);
+  initDatepicker('di-mc-start',todayIso, todayIso);
+  initDatepicker('di-mc-end',  plus14,   todayIso);
+
+  // Tabs
+  document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+    st.tab=b.dataset.tab;
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
     b.classList.add('active');
-    document.querySelectorAll('.tab-panel').forEach(p => p.style.display='none');
-    $('tab-'+st.tab).style.display = 'block';
+    document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
+    $('tab-'+st.tab).style.display='block';
     hideRes();
   }));
 
   document.querySelectorAll('.swap-btn[data-swap]').forEach(bindSwap);
 
+  // Trip-planer: init 2 stops
   addSeg(); addSeg();
   $('add-seg-btn').addEventListener('click', addSeg);
 
-  document.querySelectorAll('.overlay').forEach(o =>
-    o.addEventListener('click', e => { if(e.target===o) o.style.display='none'; }));
-  document.querySelectorAll('[data-close]').forEach(b =>
-    b.addEventListener('click', () => $(b.dataset.close).style.display='none'));
-  document.addEventListener('keydown', e => {
-    if(e.key==='Escape') document.querySelectorAll('.overlay').forEach(m => m.style.display='none');
-  });
+  // Modals
+  document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.style.display='none';}));
+  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).style.display='none'));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay').forEach(m=>m.style.display='none');});
 
   $('btn-settings').addEventListener('click', openSettings);
   $('warn-btn').addEventListener('click', openSettings);
   $('save-btn').addEventListener('click', saveSettings);
-  $('key-toggle').addEventListener('click', () => {
-    const i = $('serp-key-input');
-    const show = i.type==='password';
-    i.type = show ? 'text' : 'password';
-    $('key-toggle').textContent = show ? 'Verbergen' : 'Anzeigen';
+  $('key-toggle').addEventListener('click',()=>{
+    const i=$('serp-key-input'); const s=i.type==='password';
+    i.type=s?'text':'password'; $('key-toggle').textContent=s?'Verbergen':'Anzeigen';
   });
-
   $('search-btn').addEventListener('click', doSearch);
-  if(st.user) showUser(st.user);
-  updateWarn();
 
-  // Sortier-Buttons
-  document.querySelectorAll('.sort-btn').forEach(b => {
-    b.addEventListener('click', () => {
-      currentSort = b.dataset.sort;
-      document.querySelectorAll('.sort-btn').forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
-      renderList();
-    });
-  });
+  document.querySelectorAll('.sort-btn').forEach(b=>b.addEventListener('click',()=>{
+    currentSort=b.dataset.sort;
+    document.querySelectorAll('.sort-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    renderList();
+  }));
+
+  if(st.user) showUser(st.user);
+  $('warn-proxy').style.display='none';
 });
 
-function updateWarn() {
-  // Proxy-URL ist immer gesetzt (AUTO_PROXY als Fallback)
-  $('warn-proxy').style.display = 'none';
-}
-
-/* ── Swap ─────────────────────────────────────────────────── */
-function bindSwap(btn) {
-  btn.addEventListener('click', () => {
-    const [a,b] = btn.dataset.swap.split(',');
-    [$(a).value, $(b).value] = [$(b).value, $(a).value];
+/* ══════════════════════════════════════════════════════════
+   SWAP & SEGMENTS
+══════════════════════════════════════════════════════════ */
+function bindSwap(btn){
+  btn.addEventListener('click',()=>{
+    const [a,b]=btn.dataset.swap.split(',');
+    [$(a).value,$(b).value]=[$(b).value,$(a).value];
   });
 }
 
-/* ── Multi-City ───────────────────────────────────────────── */
-function addSeg() {
-  st.segN++;
-  const n = st.segN;
-  const div = document.createElement('div');
-  div.className = 'multi-seg'; div.id = 'seg-'+n;
-  div.innerHTML = `
-    <div class="seg-label">Flug ${n}</div>
-    ${n>2?'<button class="remove-seg" aria-label="Entfernen">×</button>':''}
-    <div class="route-row">
-      <div class="field"><label>Abflug</label><input type="text" id="sf${n}" placeholder="IATA (z.B. BER)" autocomplete="off"/></div>
-      <button class="swap-btn" data-swap="sf${n},st${n}" title="Tauschen">⇄</button>
-      <div class="field"><label>Ziel</label><input type="text" id="st${n}" placeholder="IATA (z.B. LHR)" autocomplete="off"/></div>
-    </div>
-    <div class="field" style="margin-top:10px">
-      <label>Datum</label>
-      <input type="date" id="sd${n}" value="${today()}"/>
+let segN=0;
+function addSeg(){
+  segN++;
+  const n=segN;
+  const div=document.createElement('div');
+  div.className='multi-seg'; div.id='seg-'+n;
+  div.innerHTML=`
+    <div class="seg-label">Stopp ${n} ${n>2?'<button class="remove-seg" aria-label="Entfernen">×</button>':''}</div>
+    <div class="form-row c2">
+      <div class="field"><label>Stadt / Flughafen</label><input type="text" id="sf${n}" placeholder="IATA (z.B. DXB)" autocomplete="off"/></div>
+      <div class="field"><label>Ankunft frühestens</label><div class="date-input" id="di-sf${n}"><div class="date-display placeholder" tabindex="0">TT.MM.JJJJ <span class="date-cal-icon">📅</span></div></div></div>
     </div>`;
   $('seg-container').appendChild(div);
-  const rm = div.querySelector('.remove-seg');
-  if(rm) rm.addEventListener('click', () => div.remove());
-  div.querySelectorAll('.swap-btn[data-swap]').forEach(bindSwap);
+  const todayIso=new Date().toISOString().split('T')[0];
+  initDatepicker('di-sf'+n, '', todayIso);
+  const rm=div.querySelector('.remove-seg');
+  if(rm) rm.addEventListener('click',()=>div.remove());
 }
 
-/* ── Einstellungen ────────────────────────────────────────── */
-function openSettings() {
-  $('proxy-url-input').value = st.proxyUrl;
-  $('serp-key-input').value  = st.serpKey !== DEFAULT_KEY ? st.serpKey : '';
-  $('currency-select').value = st.currency;
-  $('lang-select').value     = st.lang;
-  $('save-status').innerHTML = '';
-  $('settings-modal').style.display = 'flex';
+/* ══════════════════════════════════════════════════════════
+   EINSTELLUNGEN
+══════════════════════════════════════════════════════════ */
+function openSettings(){
+  $('proxy-url-input').value=st.proxyUrl===AUTO_PROXY?'':st.proxyUrl;
+  $('serp-key-input').value=st.serpKey!==DEFAULT_KEY?st.serpKey:'';
+  $('currency-select').value=st.currency;
+  $('lang-select').value=st.lang;
+  $('save-status').innerHTML='';
+  $('settings-modal').style.display='flex';
+}
+function saveSettings(){
+  const raw=$('proxy-url-input').value.trim().replace(/\/+$/,'');
+  if(raw&&!raw.startsWith('http')&&!raw.startsWith('/'))
+    { $('save-status').innerHTML='<div class="smsg err">URL muss mit https:// oder / beginnen.</div>'; return; }
+  st.proxyUrl=raw||AUTO_PROXY;
+  st.serpKey=$('serp-key-input').value.trim()||DEFAULT_KEY;
+  st.currency=$('currency-select').value;
+  st.lang=$('lang-select').value;
+  localStorage.setItem('proxy_url',  st.proxyUrl);
+  localStorage.setItem('serpapi_key',st.serpKey);
+  localStorage.setItem('currency',   st.currency);
+  localStorage.setItem('lang',       st.lang);
+  $('save-status').innerHTML='<div class="smsg ok">Gespeichert!</div>';
+  setTimeout(()=>{$('save-status').innerHTML='';$('settings-modal').style.display='none';},1000);
 }
 
-function saveSettings() {
-  const raw = $('proxy-url-input').value.trim().replace(/\/+$/,'');
-  if(raw && !raw.startsWith('http')) {
-    $('save-status').innerHTML = '<div class="smsg err">Worker-URL muss mit https:// beginnen.</div>';
-    return;
-  }
-  st.proxyUrl = raw;
-  st.serpKey  = $('serp-key-input').value.trim() || DEFAULT_KEY;
-  st.currency = $('currency-select').value;
-  st.lang     = $('lang-select').value;
-  localStorage.setItem('proxy_url',   st.proxyUrl);
-  localStorage.setItem('serpapi_key', st.serpKey);
-  localStorage.setItem('currency',    st.currency);
-  localStorage.setItem('lang',        st.lang);
-  $('save-status').innerHTML = '<div class="smsg ok">Gespeichert!</div>';
-  updateWarn();
-  setTimeout(() => { $('save-status').innerHTML=''; $('settings-modal').style.display='none'; }, 1000);
-}
-
-/* ── Suche ────────────────────────────────────────────────── */
-async function doSearch() {
-  const params = buildParams();
+/* ══════════════════════════════════════════════════════════
+   SUCHE
+══════════════════════════════════════════════════════════ */
+async function doSearch(){
+  const params=buildParams();
   if(!params) return;
-
-  setSearching(true);
-  hideRes();
+  setSearching(true); hideRes();
 
   try {
-    /*
-     * Anfrage an Cloudflare Worker:
-     *   https://IHR-WORKER.workers.dev?engine=google_flights&departure_id=BER&...
-     *
-     * Der Worker leitet weiter an:
-     *   https://serpapi.com/search?engine=google_flights&api_key=SECRET&...
-     *
-     * Rückgabe: JSON von SerpAPI + Access-Control-Allow-Origin: *
-     */
-    const qs  = new URLSearchParams({
-      engine:  'google_flights',
-      api_key: st.serpKey,   // Worker überschreibt dies mit dem Server-Secret
-      ...params,
-    }).toString();
+    const qs=new URLSearchParams({engine:'google_flights',api_key:st.serpKey,...params}).toString();
+    const res=await fetch(`${st.proxyUrl}?${qs}`);
+    if(!res.ok){ let m=`HTTP ${res.status}`; try{const j=await res.json();m=j.error||m;}catch{} throw new Error(m); }
+    const data=await res.json();
 
-    const res = await fetch(`${st.proxyUrl}?${qs}`);
-
-    if(!res.ok) {
-      let msg = `HTTP ${res.status}`;
-      try { const j = await res.json(); msg = j.error || msg; } catch{}
-      throw new Error(msg);
-    }
-
-    const data = await res.json();
-    renderResults(data);
-
-  } catch(err) {
-    renderErr(`Fehler: ${err.message}`);
-  }
+    if(st.tab==='mc') renderTripResults(data, params._legs);
+    else              renderResults(data);
+  } catch(err){ renderErr(`Fehler: ${err.message}`); }
 
   setSearching(false);
 }
 
-function buildParams() {
-  const base = { currency:st.currency, hl:st.lang };
+function buildParams(){
+  const base={currency:st.currency,hl:st.lang};
 
-  if(st.tab==='ow') {
-    const f=$('ow-from').value.trim(), t=$('ow-to').value.trim();
-    if(!f||!t){alert('Bitte Abflug und Ziel angeben (IATA-Code, z.B. BER oder LHR).');return null;}
-    return {...base, type:'2', departure_id:f, arrival_id:t,
-      outbound_date:$('ow-date').value, adults:$('ow-pax').value,
-      travel_class:$('ow-class').value,
+  if(st.tab==='ow'){
+    const f=$('ow-from').value.trim(),t=$('ow-to').value.trim();
+    if(!f||!t){alert('Bitte Abflug und Ziel angeben.');return null;}
+    const d=getDate('di-ow-date');
+    if(!d){alert('Bitte Datum wählen.');return null;}
+    return {...base,type:'2',departure_id:f,arrival_id:t,outbound_date:d,
+      adults:$('ow-pax').value,travel_class:$('ow-class').value,
       ...($('ow-stops').value!==''&&{stops:$('ow-stops').value})};
   }
 
-  if(st.tab==='rt') {
-    const f=$('rt-from').value.trim(), t=$('rt-to').value.trim();
-    if(!f||!t){alert('Bitte Abflug und Ziel angeben (IATA-Code).');return null;}
-    return {...base, type:'1', departure_id:f, arrival_id:t,
-      outbound_date:$('rt-dep').value, return_date:$('rt-ret').value,
-      adults:$('rt-pax').value, travel_class:$('rt-class').value,
+  if(st.tab==='rt'){
+    const f=$('rt-from').value.trim(),t=$('rt-to').value.trim();
+    if(!f||!t){alert('Bitte Abflug und Ziel angeben.');return null;}
+    const dep=getDate('di-rt-dep'),ret=getDate('di-rt-ret');
+    if(!dep||!ret){alert('Bitte beide Daten wählen.');return null;}
+    return {...base,type:'1',departure_id:f,arrival_id:t,outbound_date:dep,return_date:ret,
+      adults:$('rt-pax').value,travel_class:$('rt-class').value,
       ...($('rt-stops').value!==''&&{stops:$('rt-stops').value})};
   }
 
-  const segs=[];
-  document.querySelectorAll('.multi-seg').forEach(s => {
+  // Trip-Planer: baut Legs für SerpAPI type=3 multi-city
+  const origin=$('mc-origin').value.trim();
+  const dest  =($('mc-dest').value.trim()||origin);
+  const start =getDate('di-mc-start');
+  const end   =getDate('di-mc-end');
+  if(!origin||!start||!end){alert('Bitte Heimatflughafen und Reisedaten angeben.');return null;}
+
+  const stops=[];
+  document.querySelectorAll('.multi-seg').forEach(s=>{
     const n=s.id.replace('seg-','');
-    const f=$('sf'+n)?.value.trim(), t=$('st'+n)?.value.trim(), d=$('sd'+n)?.value;
-    if(f&&t&&d) segs.push({f,t,d});
+    const city=$('sf'+n)?.value.trim();
+    const date=getDate('di-sf'+n);
+    if(city) stops.push({city,date:date||start});
   });
-  if(segs.length<2){alert('Bitte mindestens 2 Segmente ausfüllen.');return null;}
-  return {...base, type:'3',
-    departure_id:segs.map(s=>s.f).join(','),
-    arrival_id:segs.map(s=>s.t).join(','),
-    outbound_date:segs.map(s=>s.d).join(','),
-    adults:$('mc-pax').value, travel_class:$('mc-class').value};
+  if(!stops.length){alert('Bitte mindestens einen Zwischenstopp angeben.');return null;}
+
+  // Build leg sequence: origin→stop1→stop2→…→dest
+  const legs=[{f:origin,t:stops[0].city,d:start}];
+  for(let i=0;i<stops.length-1;i++) legs.push({f:stops[i].city,t:stops[i+1].city,d:stops[i].date||start});
+  legs.push({f:stops[stops.length-1].city,t:dest,d:stops[stops.length-1].date||end});
+
+  return {...base,type:'3',
+    departure_id:legs.map(l=>l.f).join(','),
+    arrival_id:legs.map(l=>l.t).join(','),
+    outbound_date:legs.map(l=>l.d).join(','),
+    adults:$('mc-pax').value,travel_class:$('mc-class').value,
+    _legs:legs}; // internal use
 }
 
-/* ── Sortierung ───────────────────────────────────────────── */
-let allFlights = [];
-let currentSort = 'best';
+/* ══════════════════════════════════════════════════════════
+   SORTIERUNG & RENDERN
+══════════════════════════════════════════════════════════ */
+let allFlights=[], currentSort='best';
 
-function timeToMin(t) {
-  if(!t) return 9999;
-  const [h,m] = t.split(':').map(Number);
-  return h*60 + (m||0);
-}
-
-function sortFlights(flights, by) {
-  const f = [...flights];
+function timeToMin(t){if(!t)return 9999;const[h,m]=t.split(':').map(Number);return h*60+(m||0);}
+function sortFlights(fl,by){
+  const f=[...fl];
   if(by==='price')    return f.sort((a,b)=>(a.price||9999)-(b.price||9999));
   if(by==='duration') return f.sort((a,b)=>(a.total_duration||9999)-(b.total_duration||9999));
   if(by==='dep')      return f.sort((a,b)=>timeToMin(a.flights?.[0]?.departure_airport?.time)-timeToMin(b.flights?.[0]?.departure_airport?.time));
   if(by==='arr')      return f.sort((a,b)=>timeToMin(a.flights?.[0]?.arrival_airport?.time)-timeToMin(b.flights?.[0]?.arrival_airport?.time));
-  return f; // 'best' = Originalreihenfolge von SerpAPI
+  return f;
 }
 
-function logoUrl(iata) {
-  // aviationstack / airlinelogos.net liefern Logos per IATA-Code
-  if(!iata) return '';
-  return `https://www.gstatic.com/flights/airline_logos/70px/${iata}.png`;
+function logoUrl(iata){ return iata?`https://www.gstatic.com/flights/airline_logos/70px/${iata}.png`:''; }
+function airlineInitials(n){ return (n||'?').split(' ').slice(0,2).map(w=>w[0]?.toUpperCase()||'').join(''); }
+
+function logoHtml(leg){
+  const name=leg.airline||'';
+  const flightNum=leg.flight_number||'';
+  const iata=leg.airline_logo?'':(leg.iata_code||(flightNum.match(/^([A-Z]{2})/)?.[1]||''));
+  const src=leg.airline_logo||(iata?logoUrl(iata):'');
+  if(src) return `<img class="airline-logo" src="${esc(src)}" alt="${esc(name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="airline-fallback" style="display:none">${esc(airlineInitials(name))}</div>`;
+  return `<div class="airline-fallback">${esc(airlineInitials(name))}</div>`;
 }
 
-function airlineInitials(name) {
-  if(!name) return '?';
-  return name.split(' ').slice(0,2).map(w=>w[0]?.toUpperCase()||'').join('');
-}
-
-function flightCard(f) {
-  const leg   = f.flights?.[0]||{};
-  const dep   = leg.departure_airport||{};
-  const arr   = leg.arrival_airport||{};
-  const stops = f.layovers?.length??0;
-  const dur   = f.total_duration ? `${Math.floor(f.total_duration/60)}h ${f.total_duration%60}min` : '';
-  const airlineName = leg.airline||'';
-  const flightNum   = leg.flight_number||'';
-  const iata        = leg.airline_logo
-    ? '' // SerpAPI liefert manchmal direkt eine Logo-URL
-    : (leg.iata_code || (flightNum.match(/^([A-Z]{2})/)?.[1] || ''));
-  const logoSrc = leg.airline_logo || (iata ? logoUrl(iata) : '');
-
-  const logoHtml = logoSrc
-    ? `<img class="airline-logo" src="${esc(logoSrc)}" alt="${esc(airlineName)}"
-         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
-       /><div class="airline-fallback" style="display:none">${esc(airlineInitials(airlineName))}</div>`
-    : `<div class="airline-fallback">${esc(airlineInitials(airlineName))}</div>`;
-
-  return `<div class="fcard">
+function legHtml(f, labelClass, labelText){
+  const leg=f.flights?.[0]||{};
+  const dep=leg.departure_airport||{}, arr=leg.arrival_airport||{};
+  const stops=f.layovers?.length??0;
+  const dur=f.total_duration?`${Math.floor(f.total_duration/60)}h ${f.total_duration%60}min`:'';
+  const airline=[leg.airline,leg.flight_number].filter(Boolean).join(' ')||'Airline unbekannt';
+  return `<div class="fleg">
     <div class="fcard-left">
-      ${logoHtml}
+      ${logoHtml(leg)}
       <div>
+        ${labelText?`<div class="fleg-label ${labelClass}">${labelText}</div>`:''}
         <div class="ftimes">
-          ${esc(dep.time||'--:--')}
-          <span class="farrow">→</span>
-          ${esc(arr.time||'--:--')}
+          ${esc(dep.time||'--:--')} <span class="farrow">→</span> ${esc(arr.time||'--:--')}
           ${dur?`<span class="fdur">${esc(dur)}</span>`:''}
         </div>
-        <div class="fmeta">
-          ${esc([airlineName,flightNum].filter(Boolean).join(' ')||'Airline unbekannt')}
-          · ${esc(dep.id||'?')} → ${esc(arr.id||'?')}
-        </div>
+        <div class="fmeta">${esc(airline)} · ${esc(dep.id||'?')} → ${esc(arr.id||'?')}</div>
         <span class="ftag">${stops===0?'Direktflug':stops+' Stopp'+(stops>1?'s':'')}</span>
       </div>
-    </div>
-    <div class="fprice">${f.price
-      ?`<span class="amt">${esc(String(f.price))} ${esc(st.currency)}</span><span class="pp">pro Person</span>`
-      :'<span class="amt">Preis anfragen</span>'}
     </div>
   </div>`;
 }
 
-function renderList() {
-  const sorted = sortFlights(allFlights, currentSort);
-  $('results-list').innerHTML = sorted.slice(0,15).map(flightCard).join('');
+/* Buchungs-Link aus booking_token */
+function bookUrl(f){
+  if(f.booking_token) return `https://www.google.com/flights?hl=de#flt=${encodeURIComponent(f.booking_token)}`;
+  // Fallback: Google Flights Deeplink aus Departure/Arrival
+  const leg=f.flights?.[0]||{};
+  const dep=leg.departure_airport?.id||'';
+  const arr=leg.arrival_airport?.id||'';
+  const date=leg.departure_airport?.time?.split('T')[0]||'';
+  return `https://www.google.com/flights?hl=de#flt=${dep}.${arr}.${date}`;
 }
 
-/* ── Ergebnisse ───────────────────────────────────────────── */
-function renderResults(data) {
+function flightCard(f, returnFlight){
+  const hasReturn=!!returnFlight;
+  const totalPrice=hasReturn
+    ? (f.price||0)+(returnFlight.price||0)
+    : f.price||0;
+
+  return `<div class="fcard">
+    <div class="fcard-legs">
+      ${legHtml(f, 'outbound', hasReturn?'Hinflug':'')}
+      ${hasReturn ? legHtml(returnFlight,'ret','Rückflug') : ''}
+    </div>
+    <div class="fcard-footer">
+      <div class="fprice">
+        ${totalPrice?`<span class="amt">${totalPrice} ${esc(st.currency)}</span><span class="pp">pro Person${hasReturn?' (ges.)':''}</span>`:'<span class="amt">Preis anfragen</span>'}
+      </div>
+      <a class="btn-book" href="${esc(bookUrl(f))}" target="_blank" rel="noopener">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+          <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        Buchen
+      </a>
+    </div>
+  </div>`;
+}
+
+function renderList(){
+  const sorted=sortFlights(allFlights,currentSort);
+  // Für Hin-/Rückflug: returnFlights parallel
+  $('results-list').innerHTML=sorted.slice(0,15).map((f,i)=>flightCard(f, allReturnFlights[i]||null)).join('');
+}
+
+let allReturnFlights=[];
+
+function renderResults(data){
   if(data.error){renderErr(data.error);return;}
-  allFlights = [...(data.best_flights||[]),...(data.other_flights||[])];
-  $('results-title').textContent = allFlights.length ? `${allFlights.length} Flüge gefunden` : 'Keine Flüge gefunden';
+  allFlights=[...(data.best_flights||[]),...(data.other_flights||[])];
+
+  // Hin-/Rückflug: SerpAPI liefert return_flights parallel zu best_flights
+  allReturnFlights=st.tab==='rt'
+    ? [...(data.best_flights||[]).map((_,i)=>(data.return_flights||[])[i]||null),
+       ...(data.other_flights||[]).map((_,i)=>(data.return_flights||[])[i]||null)]
+    : [];
+
+  $('results-title').textContent=allFlights.length?`${allFlights.length} Flüge gefunden`:'Keine Flüge gefunden';
   $('results').style.display='block';
   if(!allFlights.length){
-    $('results-list').innerHTML='<div class="no-res">Keine Ergebnisse. Bitte IATA-Codes prüfen (z.B. BER, MUC, LHR, CDG, JFK).</div>';
+    $('results-list').innerHTML='<div class="no-res">Keine Ergebnisse. Bitte IATA-Codes prüfen (BER, MUC, LHR, CDG, JFK…).</div>';
     return;
   }
-  currentSort = 'best';
-  document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b.dataset.sort==='best'));
+  currentSort='best';
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active',b.dataset.sort==='best'));
   renderList();
 }
 
-function renderErr(msg) {
+/* ── Trip-Planer Ergebnisse ───────────────────────────────── */
+function renderTripResults(data, legs){
+  if(data.error){renderErr(data.error);return;}
+  // SerpAPI liefert für Multi-City die Legs in best_flights[0].flights[]
+  const combos=[...(data.best_flights||[]),...(data.other_flights||[])];
   $('results').style.display='block';
-  $('results-list').innerHTML=`<div class="no-res err">${esc(msg)}</div>`;
+
+  if(!combos.length){
+    $('results-title').textContent='Keine Trip-Kombinationen gefunden';
+    $('results-list').innerHTML='<div class="no-res">Keine Ergebnisse. Bitte Strecken und Daten prüfen.</div>';
+    return;
+  }
+
+  $('results-title').textContent=`${combos.length} Trip-Kombinationen gefunden`;
+
+  $('results-list').innerHTML=combos.slice(0,10).map(combo=>{
+    const allLegs=combo.flights||[];
+    const dur=combo.total_duration?`${Math.floor(combo.total_duration/60)}h ${combo.total_duration%60}min`:'';
+    const route=(legs||[]).map(l=>l.f).concat([legs?.[legs.length-1]?.t]).filter(Boolean).join(' → ');
+
+    const legsHtml=allLegs.map((leg,i)=>{
+      const dep=leg.departure_airport||{}, arr=leg.arrival_airport||{};
+      const legDur=leg.duration?`${Math.floor(leg.duration/60)}h ${leg.duration%60}min`:'';
+      const airline=[leg.airline,leg.flight_number].filter(Boolean).join(' ')||'?';
+      const iata=leg.airline_logo?'':(leg.iata_code||(leg.flight_number?.match(/^([A-Z]{2})/)?.[1]||''));
+      const src=leg.airline_logo||(iata?logoUrl(iata):'');
+      const logo=src
+        ?`<img class="airline-logo" src="${esc(src)}" alt="${esc(leg.airline||'')}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="airline-fallback" style="display:none">${esc(airlineInitials(leg.airline||''))}</div>`
+        :`<div class="airline-fallback">${esc(airlineInitials(leg.airline||''))}</div>`;
+      return `<div class="fleg">
+        <div class="fcard-left">
+          ${logo}
+          <div>
+            <div class="fleg-label outbound">Leg ${i+1}</div>
+            <div class="ftimes">${esc(dep.time||'--:--')} <span class="farrow">→</span> ${esc(arr.time||'--:--')}${legDur?`<span class="fdur">${esc(legDur)}</span>`:''}</div>
+            <div class="fmeta">${esc(airline)} · ${esc(dep.id||'?')} → ${esc(arr.id||'?')}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="trip-result">
+      <div class="trip-result-header">
+        <span class="route">${esc(route)}${dur?` · <em>${esc(dur)} Gesamt</em>`:''}</span>
+        <span class="total">${combo.price?combo.price+' '+st.currency:'Preis anfragen'}</span>
+      </div>
+      <div class="fcard-legs">${legsHtml}</div>
+      <div class="fcard-footer">
+        <div class="fprice">${combo.price?`<span class="amt">${combo.price} ${esc(st.currency)}</span><span class="pp">gesamt pro Person</span>`:'<span class="amt">Preis anfragen</span>'}</div>
+        <a class="btn-book" href="${esc(bookUrl(combo))}" target="_blank" rel="noopener">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+            <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          Buchen
+        </a>
+      </div>
+    </div>`;
+  }).join('');
 }
-function hideRes() { $('results').style.display='none'; }
-function setSearching(on) {
+
+function renderErr(msg){$('results').style.display='block';$('results-list').innerHTML=`<div class="no-res err">${esc(msg)}</div>`;}
+function hideRes(){$('results').style.display='none';}
+function setSearching(on){
   $('search-btn').disabled=on;
-  $('search-btn').innerHTML=on
-    ?'Suche läuft <span class="dots"><span></span><span></span><span></span></span>'
-    :'Flüge suchen';
+  $('search-btn').innerHTML=on?'Suche läuft <span class="dots"><span></span><span></span><span></span></span>':'Flüge suchen';
 }
 </script>
 </body>
