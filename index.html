@@ -130,19 +130,42 @@
     .fcard{background:var(--surface);border:.5px solid var(--border);border-radius:12px;margin-bottom:12px;box-shadow:var(--sh);overflow:hidden;transition:box-shadow .15s}
     .fcard:hover{box-shadow:var(--shm)}
     .fcard-legs{padding:0}
-    .fleg{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:14px 1.25rem}
     .fleg+.fleg{border-top:.5px solid var(--border)}
-    .fleg-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:4px;margin-bottom:6px}
+
+    /* leg header – kompakt: Label + Start→Ende + Gesamtdauer */
+    .fleg-header{display:flex;align-items:center;justify-content:space-between;padding:12px 1.25rem 10px;gap:12px;flex-wrap:wrap}
+    .fleg-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;border-radius:4px;flex-shrink:0}
     .fleg-label.outbound{background:var(--sky-light);color:var(--sky)}
     .fleg-label.ret{background:var(--green-light);color:var(--green)}
-    .fcard-left{display:flex;align-items:center;gap:12px;min-width:0}
+    .fleg-route{display:flex;align-items:baseline;gap:6px;flex:1;min-width:0}
+    .fleg-airports{font-size:17px;font-weight:700;white-space:nowrap}
+    .fleg-airports .farrow{color:var(--text-3);font-size:14px;margin:0 4px}
+    .fleg-times{font-size:12px;color:var(--text-2);white-space:nowrap}
+    .fleg-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+    .fleg-dur{font-size:12px;font-style:italic;color:var(--text-3)}
+    .ftag{display:inline-block;background:var(--sky-light);color:var(--sky);font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px}
+
+    /* timeline inside a leg */
+    .fleg-timeline{padding:0 1.25rem 12px 1.25rem;border-top:.5px solid var(--border)}
+    .tl-row{display:flex;align-items:stretch;gap:0;min-height:52px}
+    .tl-left{width:44px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding-top:14px}
+    .tl-dot{width:9px;height:9px;border-radius:50%;background:var(--sky);flex-shrink:0}
+    .tl-dot.small{background:var(--text-3);width:7px;height:7px}
+    .tl-line{width:1px;background:var(--border-med);flex:1;margin:3px 0}
+    .tl-body{flex:1;padding:10px 0 10px 0}
+    .tl-seg{display:flex;align-items:center;gap:10px}
+    .tl-logo{width:28px;height:28px;border-radius:6px;border:.5px solid var(--border);object-fit:contain;background:#fff;flex-shrink:0;padding:2px}
+    .tl-logo-fb{width:28px;height:28px;border-radius:6px;border:.5px solid var(--border);background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:var(--text-2)}
+    .tl-seg-info{}
+    .tl-seg-main{font-size:13px;font-weight:500;color:var(--text-1)}
+    .tl-seg-sub{font-size:11px;color:var(--text-2);margin-top:1px}
+    .tl-layover{display:flex;align-items:center;gap:6px;padding:4px 0}
+    .tl-layover-pill{font-size:11px;color:var(--text-2);background:var(--surface-2);border:.5px solid var(--border);border-radius:20px;padding:3px 10px;white-space:nowrap}
+
     .airline-logo{width:36px;height:36px;border-radius:8px;border:.5px solid var(--border);object-fit:contain;background:#fff;flex-shrink:0;padding:3px}
     .airline-fallback{width:36px;height:36px;border-radius:8px;border:.5px solid var(--border);background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--text-2)}
-    .ftimes{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600}
     .farrow{color:var(--text-3);font-size:13px}
-    .fmeta{font-size:12px;color:var(--text-2);margin-top:2px}
-    .fdur{font-style:italic;color:var(--text-3);font-size:12px;margin-left:4px}
-    .ftag{display:inline-block;background:var(--sky-light);color:var(--sky);font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;margin-top:5px}
+    .fdur{font-style:italic;color:var(--text-3);font-size:12px}
     .fcard-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 1.25rem;border-top:.5px solid var(--border);background:var(--surface-2)}
     .fprice .amt{font-size:18px;font-weight:700;color:var(--sky)}
     .fprice .pp{font-size:11px;color:var(--text-3);margin-left:4px}
@@ -155,15 +178,6 @@
     .trip-result-header{display:flex;align-items:center;justify-content:space-between;padding:12px 1.25rem;border-bottom:.5px solid var(--border);background:var(--sky-light)}
     .trip-result-header .total{font-size:15px;font-weight:700;color:var(--sky)}
     .trip-result-header .route{font-size:13px;color:#0047cc}
-
-    /* flight segments & layovers */
-    .fleg-header{padding:10px 1.25rem 4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .fleg-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .ftimes-sm{font-size:15px;font-weight:600;display:flex;align-items:center;gap:6px}
-    .fsegment{display:flex;align-items:center;gap:12px;padding:8px 1.25rem 8px 2.5rem;border-top:.5px dashed var(--border)}
-    .fsegment .fcard-left{display:flex;align-items:center;gap:10px}
-    .fmeta-sm{font-size:11px;color:var(--text-3);margin-top:1px}
-    .layover-badge{margin:0 1.25rem 2px 3.5rem;font-size:11px;color:var(--text-2);background:var(--surface-2);border-radius:4px;padding:3px 8px;display:inline-block}
     .no-res{text-align:center;padding:2.5rem;color:var(--text-2);font-size:14px}
     .no-res.err{color:#c0392b}
 
@@ -851,51 +865,116 @@ function logoHtml(leg){
   return `<div class="airline-fallback">${esc(airlineInitials(name))}</div>`;
 }
 
-function segmentHtml(leg, showLayover){
-  // Einzelnes Flugsegment (ein physischer Flug)
-  const dep=leg.departure_airport||{}, arr=leg.arrival_airport||{};
-  const segDur=leg.duration?`${Math.floor(leg.duration/60)}h ${leg.duration%60}min`:'';
-  const airline=[leg.airline,leg.flight_number].filter(Boolean).join(' ')||'';
-  const layoverMin=showLayover?.duration||0;
-  const layoverStr=layoverMin?`${Math.floor(layoverMin/60)}h ${layoverMin%60}min Umstieg in ${esc(showLayover.id||'?')}`:'';
-  return `
-    <div class="fsegment">
-      <div class="fcard-left">
-        ${logoHtml(leg)}
-        <div>
-          <div class="ftimes">
-            ${esc(dep.time||'--:--')} <span class="farrow">→</span> ${esc(arr.time||'--:--')}
-            ${segDur?`<span class="fdur">${esc(segDur)}</span>`:''}
-          </div>
-          <div class="fmeta">${esc(airline||'Airline unbekannt')} · ${esc(dep.id||'?')} → ${esc(arr.id||'?')}</div>
-          ${dep.name?`<div class="fmeta-sm">${esc(dep.name)}</div>`:''}
-        </div>
-      </div>
-    </div>
-    ${layoverStr?`<div class="layover-badge">⏱ ${layoverStr}</div>`:''}`;
+/* ── Timeline-Logo (kleiner als Karten-Logo) ── */
+function tlLogo(leg){
+  const name=leg.airline||'';
+  const fn=leg.flight_number||'';
+  const iata=leg.airline_logo?'':(leg.iata_code||(fn.match(/^([A-Z]{2})/)?.[1]||''));
+  const src=leg.airline_logo||(iata?logoUrl(iata):'');
+  if(src) return `<img class="tl-logo" src="${esc(src)}" alt="${esc(name)}"
+    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+    <div class="tl-logo-fb" style="display:none">${esc(airlineInitials(name))}</div>`;
+  return `<div class="tl-logo-fb">${esc(airlineInitials(name))}</div>`;
 }
 
 function legHtml(f, labelClass, labelText){
-  const segments=f.flights||[];
-  const layovers=f.layovers||[];
-  const totalStops=layovers.length;
-  const dur=f.total_duration?`${Math.floor(f.total_duration/60)}h ${f.total_duration%60}min`:'';
+  const segments = f.flights  || [];
+  const layovers = f.layovers || [];
+  const totalStops = layovers.length;
+  const dur = f.total_duration
+    ? `${Math.floor(f.total_duration/60)}h ${f.total_duration%60}min` : '';
 
-  // Header-Zeile: erste Abflugzeit → letzte Ankunftszeit + Gesamtdauer
-  const firstDep=segments[0]?.departure_airport||{};
-  const lastArr=segments[segments.length-1]?.arrival_airport||{};
+  const firstSeg = segments[0]  || {};
+  const lastSeg  = segments[segments.length-1] || {};
+  const firstDep = firstSeg.departure_airport || {};
+  const lastArr  = lastSeg.arrival_airport    || {};
 
-  const segmentsHtml=segments.map((seg,i)=>segmentHtml(seg, layovers[i]||null)).join('');
-
-  return `<div class="fleg">
-    <div class="fleg-header">
-      ${labelText?`<div class="fleg-label ${labelClass}">${labelText}</div>`:''}
-      <div class="fleg-summary">
-        <span class="ftimes-sm">${esc(firstDep.time||'--:--')} <span class="farrow">→</span> ${esc(lastArr.time||'--:--')}${dur?` <span class="fdur">${esc(dur)}</span>`:''}</span>
-        <span class="ftag">${totalStops===0?'Direktflug':totalStops+' Stopp'+(totalStops>1?'s':'')}</span>
-      </div>
+  // ── Kompakter Header: BER → LHR  07:30 → 09:45  2h 15min  Direktflug ──
+  const header = `<div class="fleg-header">
+    ${labelText ? `<div class="fleg-label ${labelClass}">${labelText}</div>` : ''}
+    <div class="fleg-route">
+      <span class="fleg-airports">
+        ${esc(firstDep.id||'?')}
+        <span class="farrow">→</span>
+        ${esc(lastArr.id||'?')}
+      </span>
+      <span class="fleg-times">${esc(firstDep.time||'--:--')} – ${esc(lastArr.time||'--:--')}</span>
     </div>
-    ${segmentsHtml}
+    <div class="fleg-right">
+      ${dur ? `<span class="fleg-dur">${esc(dur)}</span>` : ''}
+      <span class="ftag">${totalStops===0?'Direktflug':totalStops+' Stopp'+(totalStops>1?'s':'')}</span>
+    </div>
+  </div>`;
+
+  // ── Bei Direktflug: keine Timeline nötig, nur Airline-Info ──
+  if(segments.length <= 1){
+    const seg = segments[0] || {};
+    const airline = [seg.airline, seg.flight_number].filter(Boolean).join(' ') || 'Airline unbekannt';
+    const segDur = seg.duration ? `${Math.floor(seg.duration/60)}h ${seg.duration%60}min` : '';
+    return `<div class="fleg">${header}
+      <div class="fleg-timeline">
+        <div class="tl-row">
+          <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
+          <div class="tl-body">
+            <div class="tl-seg">
+              ${tlLogo(seg)}
+              <div class="tl-seg-info">
+                <div class="tl-seg-main">${esc(airline)}</div>
+                <div class="tl-seg-sub">${esc(firstDep.id||'?')} ${esc(firstDep.time||'')} → ${esc(lastArr.id||'?')} ${esc(lastArr.time||'')}${segDur?' · <em>'+esc(segDur)+'</em>':''}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── Mit Stops: vertikale Timeline ──
+  let timelineHtml = '';
+  segments.forEach((seg, i) => {
+    const dep = seg.departure_airport || {};
+    const arr = seg.arrival_airport   || {};
+    const segDur = seg.duration ? `${Math.floor(seg.duration/60)}h ${seg.duration%60}min` : '';
+    const airline = [seg.airline, seg.flight_number].filter(Boolean).join(' ') || '?';
+    const layover = layovers[i];
+    const layMin  = layover?.duration || 0;
+    const layStr  = layMin
+      ? `${Math.floor(layMin/60)}h ${layMin%60}min Aufenthalt in ${esc(layover.id||arr.id||'?')}`
+      : '';
+    const isLast  = i === segments.length - 1;
+
+    timelineHtml += `
+      <div class="tl-row">
+        <div class="tl-left">
+          <div class="tl-dot"></div>
+          ${!isLast || layStr ? '<div class="tl-line"></div>' : ''}
+        </div>
+        <div class="tl-body">
+          <div class="tl-seg">
+            ${tlLogo(seg)}
+            <div class="tl-seg-info">
+              <div class="tl-seg-main">${esc(airline)}</div>
+              <div class="tl-seg-sub">
+                ${esc(dep.id||'?')} ${esc(dep.time||'')}
+                <span class="farrow">→</span>
+                ${esc(arr.id||'?')} ${esc(arr.time||'')}
+                ${segDur ? ` · <em>${esc(segDur)}</em>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${layStr ? `
+      <div class="tl-row">
+        <div class="tl-left"><div class="tl-dot small"></div><div class="tl-line"></div></div>
+        <div class="tl-body tl-layover">
+          <div class="tl-layover-pill">⏱ ${layStr}</div>
+        </div>
+      </div>` : ''}`;
+  });
+
+  return `<div class="fleg">${header}
+    <div class="fleg-timeline">${timelineHtml}</div>
   </div>`;
 }
 
