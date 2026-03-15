@@ -156,6 +156,14 @@
     .trip-result-header .total{font-size:15px;font-weight:700;color:var(--sky)}
     .trip-result-header .route{font-size:13px;color:#0047cc}
 
+    /* flight segments & layovers */
+    .fleg-header{padding:10px 1.25rem 4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .fleg-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .ftimes-sm{font-size:15px;font-weight:600;display:flex;align-items:center;gap:6px}
+    .fsegment{display:flex;align-items:center;gap:12px;padding:8px 1.25rem 8px 2.5rem;border-top:.5px dashed var(--border)}
+    .fsegment .fcard-left{display:flex;align-items:center;gap:10px}
+    .fmeta-sm{font-size:11px;color:var(--text-3);margin-top:1px}
+    .layover-badge{margin:0 1.25rem 2px 3.5rem;font-size:11px;color:var(--text-2);background:var(--surface-2);border-radius:4px;padding:3px 8px;display:inline-block}
     .no-res{text-align:center;padding:2.5rem;color:var(--text-2);font-size:14px}
     .no-res.err{color:#c0392b}
 
@@ -340,10 +348,10 @@
       <div class="sort-bar">
         <span class="sort-label">Sortieren:</span>
         <button class="sort-btn active" data-sort="best">Beste</button>
-        <button class="sort-btn" data-sort="price">Preis ↑</button>
-        <button class="sort-btn" data-sort="duration">Dauer ↑</button>
-        <button class="sort-btn" data-sort="dep">Abflug ↑</button>
-        <button class="sort-btn" data-sort="arr">Ankunft ↑</button>
+        <button class="sort-btn" data-sort="price" data-dir="asc">Preis ↑</button>
+        <button class="sort-btn" data-sort="duration" data-dir="asc">Dauer ↑</button>
+        <button class="sort-btn" data-sort="dep" data-dir="asc">Abflug ↑</button>
+        <button class="sort-btn" data-sort="arr" data-dir="asc">Ankunft ↑</button>
       </div>
     </div>
     <div id="results-list"></div>
@@ -634,9 +642,32 @@ document.addEventListener('DOMContentLoaded', () => {
   $('search-btn').addEventListener('click', doSearch);
 
   document.querySelectorAll('.sort-btn').forEach(b=>b.addEventListener('click',()=>{
-    currentSort=b.dataset.sort;
-    document.querySelectorAll('.sort-btn').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
+    const sort=b.dataset.sort;
+    if(sort==='best'){
+      currentSort='best'; currentDir='asc';
+      document.querySelectorAll('.sort-btn').forEach(x=>{x.classList.remove('active');if(x.dataset.dir){x.dataset.dir='asc';x.textContent=x.textContent.replace('↓','↑');}});
+      b.classList.add('active');
+    } else if(currentSort===sort){
+      // Same button: toggle direction
+      currentDir = currentDir==='asc'?'desc':'asc';
+      const arrow = currentDir==='asc'?'↑':'↓';
+      const label = sort==='price'?'Preis':sort==='duration'?'Dauer':sort==='dep'?'Abflug':'Ankunft';
+      b.textContent=`${label} ${arrow}`;
+      b.dataset.dir=currentDir;
+    } else {
+      // New sort criterion
+      currentSort=sort; currentDir='asc';
+      document.querySelectorAll('.sort-btn').forEach(x=>{
+        x.classList.remove('active');
+        if(x.dataset.dir){
+          x.dataset.dir='asc';
+          const lbl=x.dataset.sort==='price'?'Preis':x.dataset.sort==='duration'?'Dauer':x.dataset.sort==='dep'?'Abflug':'Ankunft';
+          x.textContent=`${lbl} ↑`;
+        }
+      });
+      b.classList.add('active');
+      b.textContent=`${sort==='price'?'Preis':sort==='duration'?'Dauer':sort==='dep'?'Abflug':'Ankunft'} ↑`;
+    }
     renderList();
   }));
 
@@ -794,15 +825,17 @@ function buildParams(){
 /* ══════════════════════════════════════════════════════════
    SORTIERUNG & RENDERN
 ══════════════════════════════════════════════════════════ */
-let allFlights=[], currentSort='best';
+let allFlights=[], currentSort='best', currentDir='asc';
 
 function timeToMin(t){if(!t)return 9999;const[h,m]=t.split(':').map(Number);return h*60+(m||0);}
-function sortFlights(fl,by){
+function sortFlights(fl,by,dir){
   const f=[...fl];
-  if(by==='price')    return f.sort((a,b)=>(a.price||9999)-(b.price||9999));
-  if(by==='duration') return f.sort((a,b)=>(a.total_duration||9999)-(b.total_duration||9999));
-  if(by==='dep')      return f.sort((a,b)=>timeToMin(a.flights?.[0]?.departure_airport?.time)-timeToMin(b.flights?.[0]?.departure_airport?.time));
-  if(by==='arr')      return f.sort((a,b)=>timeToMin(a.flights?.[0]?.arrival_airport?.time)-timeToMin(b.flights?.[0]?.arrival_airport?.time));
+  const asc = dir!=='desc';
+  const cmp = (a,b) => asc ? a-b : b-a;
+  if(by==='price')    return f.sort((a,b)=>cmp(a.price||9999, b.price||9999));
+  if(by==='duration') return f.sort((a,b)=>cmp(a.total_duration||9999, b.total_duration||9999));
+  if(by==='dep')      return f.sort((a,b)=>cmp(timeToMin(a.flights?.[0]?.departure_airport?.time), timeToMin(b.flights?.[0]?.departure_airport?.time)));
+  if(by==='arr')      return f.sort((a,b)=>cmp(timeToMin(a.flights?.[0]?.arrival_airport?.time), timeToMin(b.flights?.[0]?.arrival_airport?.time)));
   return f;
 }
 
@@ -818,25 +851,51 @@ function logoHtml(leg){
   return `<div class="airline-fallback">${esc(airlineInitials(name))}</div>`;
 }
 
-function legHtml(f, labelClass, labelText){
-  const leg=f.flights?.[0]||{};
+function segmentHtml(leg, showLayover){
+  // Einzelnes Flugsegment (ein physischer Flug)
   const dep=leg.departure_airport||{}, arr=leg.arrival_airport||{};
-  const stops=f.layovers?.length??0;
-  const dur=f.total_duration?`${Math.floor(f.total_duration/60)}h ${f.total_duration%60}min`:'';
-  const airline=[leg.airline,leg.flight_number].filter(Boolean).join(' ')||'Airline unbekannt';
-  return `<div class="fleg">
-    <div class="fcard-left">
-      ${logoHtml(leg)}
-      <div>
-        ${labelText?`<div class="fleg-label ${labelClass}">${labelText}</div>`:''}
-        <div class="ftimes">
-          ${esc(dep.time||'--:--')} <span class="farrow">→</span> ${esc(arr.time||'--:--')}
-          ${dur?`<span class="fdur">${esc(dur)}</span>`:''}
+  const segDur=leg.duration?`${Math.floor(leg.duration/60)}h ${leg.duration%60}min`:'';
+  const airline=[leg.airline,leg.flight_number].filter(Boolean).join(' ')||'';
+  const layoverMin=showLayover?.duration||0;
+  const layoverStr=layoverMin?`${Math.floor(layoverMin/60)}h ${layoverMin%60}min Umstieg in ${esc(showLayover.id||'?')}`:'';
+  return `
+    <div class="fsegment">
+      <div class="fcard-left">
+        ${logoHtml(leg)}
+        <div>
+          <div class="ftimes">
+            ${esc(dep.time||'--:--')} <span class="farrow">→</span> ${esc(arr.time||'--:--')}
+            ${segDur?`<span class="fdur">${esc(segDur)}</span>`:''}
+          </div>
+          <div class="fmeta">${esc(airline||'Airline unbekannt')} · ${esc(dep.id||'?')} → ${esc(arr.id||'?')}</div>
+          ${dep.name?`<div class="fmeta-sm">${esc(dep.name)}</div>`:''}
         </div>
-        <div class="fmeta">${esc(airline)} · ${esc(dep.id||'?')} → ${esc(arr.id||'?')}</div>
-        <span class="ftag">${stops===0?'Direktflug':stops+' Stopp'+(stops>1?'s':'')}</span>
       </div>
     </div>
+    ${layoverStr?`<div class="layover-badge">⏱ ${layoverStr}</div>`:''}`;
+}
+
+function legHtml(f, labelClass, labelText){
+  const segments=f.flights||[];
+  const layovers=f.layovers||[];
+  const totalStops=layovers.length;
+  const dur=f.total_duration?`${Math.floor(f.total_duration/60)}h ${f.total_duration%60}min`:'';
+
+  // Header-Zeile: erste Abflugzeit → letzte Ankunftszeit + Gesamtdauer
+  const firstDep=segments[0]?.departure_airport||{};
+  const lastArr=segments[segments.length-1]?.arrival_airport||{};
+
+  const segmentsHtml=segments.map((seg,i)=>segmentHtml(seg, layovers[i]||null)).join('');
+
+  return `<div class="fleg">
+    <div class="fleg-header">
+      ${labelText?`<div class="fleg-label ${labelClass}">${labelText}</div>`:''}
+      <div class="fleg-summary">
+        <span class="ftimes-sm">${esc(firstDep.time||'--:--')} <span class="farrow">→</span> ${esc(lastArr.time||'--:--')}${dur?` <span class="fdur">${esc(dur)}</span>`:''}</span>
+        <span class="ftag">${totalStops===0?'Direktflug':totalStops+' Stopp'+(totalStops>1?'s':'')}</span>
+      </div>
+    </div>
+    ${segmentsHtml}
   </div>`;
 }
 
@@ -878,9 +937,23 @@ function flightCard(f, returnFlight){
 }
 
 function renderList(){
-  const sorted=sortFlights(allFlights,currentSort);
-  // Für Hin-/Rückflug: returnFlights parallel
-  $('results-list').innerHTML=sorted.slice(0,15).map((f,i)=>flightCard(f, allReturnFlights[i]||null)).join('');
+  const sorted=sortFlights(allFlights, currentSort, currentDir);
+  // Index-Mapping erhalten: nach Sort stimmt der Index nicht mehr mit allReturnFlights überein
+  // Daher paaren wir beim ersten Laden und sortieren paarweise
+  const pairs = allFlights.map((f,i)=>({f, ret:allReturnFlights[i]||null}));
+  const sortedPairs = sortFlightPairs(pairs, currentSort, currentDir);
+  $('results-list').innerHTML=sortedPairs.slice(0,15).map(p=>flightCard(p.f, p.ret)).join('');
+}
+
+function sortFlightPairs(pairs, by, dir){
+  const p=[...pairs];
+  const asc=dir!=='desc';
+  const cmp=(a,b)=>asc?a-b:b-a;
+  if(by==='price')    return p.sort((a,b)=>cmp(a.f.price||9999, b.f.price||9999));
+  if(by==='duration') return p.sort((a,b)=>cmp(a.f.total_duration||9999, b.f.total_duration||9999));
+  if(by==='dep')      return p.sort((a,b)=>cmp(timeToMin(a.f.flights?.[0]?.departure_airport?.time), timeToMin(b.f.flights?.[0]?.departure_airport?.time)));
+  if(by==='arr')      return p.sort((a,b)=>cmp(timeToMin(a.f.flights?.[0]?.arrival_airport?.time), timeToMin(b.f.flights?.[0]?.arrival_airport?.time)));
+  return p;
 }
 
 let allReturnFlights=[];
@@ -889,11 +962,17 @@ function renderResults(data){
   if(data.error){renderErr(data.error);return;}
   allFlights=[...(data.best_flights||[]),...(data.other_flights||[])];
 
-  // Hin-/Rückflug: SerpAPI liefert return_flights parallel zu best_flights
-  allReturnFlights=st.tab==='rt'
-    ? [...(data.best_flights||[]).map((_,i)=>(data.return_flights||[])[i]||null),
-       ...(data.other_flights||[]).map((_,i)=>(data.return_flights||[])[i]||null)]
-    : [];
+  // Hin-/Rückflug: SerpAPI kann return_flights entweder top-level ODER
+  // als .return_flights[] innerhalb jedes best_flights-Eintrags liefern.
+  if(st.tab==='rt'){
+    const topLevel = data.return_flights||[];
+    allReturnFlights = [
+      ...(data.best_flights||[]).map((f,i)=> f.return_flights?.[0] || topLevel[i] || null),
+      ...(data.other_flights||[]).map((f,i)=> f.return_flights?.[0] || topLevel[(data.best_flights||[]).length+i] || null),
+    ];
+  } else {
+    allReturnFlights=[];
+  }
 
   $('results-title').textContent=allFlights.length?`${allFlights.length} Flüge gefunden`:'Keine Flüge gefunden';
   $('results').style.display='block';
