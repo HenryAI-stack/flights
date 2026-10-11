@@ -307,6 +307,22 @@
     .bopt-sub{font-size:11px;color:var(--text-2)}
     .bopt-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
 
+    /* Deals ab Warschau */
+    .deals{margin-top:1.5rem}
+    .deals-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+    .deals-head h3{font-size:15px;font-weight:600}
+    .deals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+    .deal{background:var(--surface);border:.5px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:4px}
+    .deal.expired{opacity:.55}
+    .deal-to{font-size:15px;font-weight:600}
+    .deal-meta{font-size:12px;color:var(--text-2)}
+    .deal-price{font-size:18px;font-weight:700;color:var(--green);margin-top:2px}
+    .deal-badge{display:inline-block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:1px 6px;border-radius:4px;background:var(--surface-2);color:var(--text-2);margin-left:6px;vertical-align:middle}
+    .deal a{margin-top:auto;padding-top:6px;font-size:12px;font-weight:600;color:var(--sky);text-decoration:none}
+    .deal a:hover{text-decoration:underline}
+    .deals-foot{font-size:12px;color:var(--text-3);margin-top:10px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+    .deals-foot a{color:var(--sky)}
+
     @media(max-width:640px){
       .fcard-footer{flex-wrap:wrap;gap:8px}
       .form-row.c2,.form-row.c3,.form-row.c4{grid-template-columns:1fr}
@@ -529,6 +545,16 @@
     </div>
     <div id="results-step"></div>
     <div id="results-list"></div>
+  </section>
+
+  <!-- Deals ab Warschau (täglich von Secret Flying, siehe scripts/fetch-deals.mjs) -->
+  <section class="deals" id="deals" style="display:none">
+    <div class="deals-head">
+      <h3>✈️ Deals ab Warschau</h3>
+      <label class="chk"><input type="checkbox" id="deals-expired"/> abgelaufene zeigen</label>
+    </div>
+    <div class="deals-grid" id="deals-list"></div>
+    <div class="deals-foot" id="deals-foot"></div>
   </section>
 </div>
 
@@ -1790,6 +1816,36 @@ function syncDepartureDate(from, to){
   selectDate(dst, iso);   // passt Rückflug/Folgedaten an, falls sie davor liegen
 }
 
+/* ── Deals ab Warschau (deals.json, täglich per GitHub Actions) ── */
+let DEALS=null;
+async function loadDeals(){
+  try{
+    const r=await fetch('deals.json',{cache:'no-cache'});
+    if(!r.ok) return;
+    DEALS=await r.json();
+    renderDeals();
+  }catch{}
+}
+function renderDeals(){
+  if(!DEALS?.deals?.length){ $('deals').style.display='none'; return; }
+  const showOld=$('deals-expired').checked;
+  const list=DEALS.deals.filter(d=>showOld||!d.expired);
+  const trip={roundtrip:'Hin & Rück', oneway:'Nur Hinflug'};
+  $('deals-list').innerHTML=list.length?list.map(d=>`
+    <div class="deal${d.expired?' expired':''}">
+      <div class="deal-to">${esc(d.to||d.title)}${d.expired?'<span class="deal-badge">abgelaufen</span>':''}</div>
+      <div class="deal-meta">ab ${esc(d.from||'Warschau')}${d.trip?` · ${trip[d.trip]}`:''}</div>
+      ${d.price?`<div class="deal-price">${esc(d.price)}</div>`:''}
+      <div class="deal-meta">${d.date?`veröffentlicht ${esc(isoToDE(d.date))}`:''}</div>
+      <a href="${esc(d.link)}" target="_blank" rel="noopener">Zum Deal auf Secret Flying ↗</a>
+    </div>`).join('')
+    :'<p class="muted">Aktuell keine gültigen Deals – „abgelaufene zeigen" für ältere Angebote.</p>';
+  const upd=DEALS.updated?isoToDE(DEALS.updated.slice(0,10)):'';
+  $('deals-foot').innerHTML=`<span>Quelle: Secret Flying · täglich aktualisiert${upd?` · Stand ${esc(upd)}`:''}${DEALS.stale?' (Quelle zuletzt nicht erreichbar)':''}</span>
+    <a href="${esc(DEALS.searchUrl||'https://www.secretflying.com/')}" target="_blank" rel="noopener">Alle Deals auf Secret Flying ↗</a>`;
+  $('deals').style.display='block';
+}
+
 function switchTab(tab){
   const prev=st.tab;
   st.tab=tab;
@@ -1883,6 +1939,8 @@ document.addEventListener('DOMContentLoaded', () => {
   updateOpts();
 
   if(st.user) showUser(st.user);
+  $('deals-expired').addEventListener('change', renderDeals);
+  loadDeals();
   $('warn-proxy').style.display='none';
 });
 </script>
