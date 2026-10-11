@@ -188,3 +188,87 @@ test('Explore: Ziele nach Preis sortiert, ohne Flugpreis ausgefiltert', async ()
   const { data } = await call({ action: 'explore', from: 'VIE', nearby: true }, { deps: { fetch, cache: null } });
   assert.deepEqual(data.destinations.map(d => d.name), ['C', 'A']);
 });
+
+/* ── Travelpayouts ─────────────────────────────────────── */
+function fakeBoth(tpPrices, serpPrice = 100) {
+  const calls = { tp: [], serp: [] };
+  const fetch = async (url, init = {}) => {
+    const u = new URL(url);
+    const p = Object.fromEntries(u.searchParams);
+    if (u.hostname === 'api.travelpayouts.com') {
+      calls.tp.push({ ...p, token: init.headers?.['X-Access-Token'] });
+      const data = {};
+      for (const [d, price] of Object.entries(tpPrices)) {
+        if (!d.startsWith(p.departure_at)) continue;
+        const ret = p.min_trip_duration ? addDays(d, +p.min_trip_duration) : null;
+        if (ret && !ret.startsWith(p.return_at)) continue;
+        data[d] = { price, airline: 'FR', transfers: 0, departure_at: `${d}T08:00:00+02:00`,
+          ...(ret ? { return_at: `${ret}T18:00:00+02:00` } : {}) };
+      }
+      return new Response(JSON.stringify({ success: true, data }));
+    }
+    calls.serp.push(p);
+    return new Response(JSON.stringify({ best_flights: [{ price: serpPrice, flights: [] }], other_flights: [] }));
+  };
+  return { fetch, calls };
+}
+const TP_ENV = { SERPAPI_KEY: 'k', TRAVELPAYOUTS_TOKEN: 'tp' };
+
+test('Vorauswahl: ±3 Tage gratis prüfen, nur Wunschtag + 2 günstigste live abfragen', async () => {
+  const d0 = inDays(20);
+  const tp = { [addDays(d0, -3)]: 90, [addDays(d0, -1)]: 150, [d0]: 120, [addDays(d0, 2)]: 60, [addDays(d0, 3)]: 200 };
+  const s = fakeBoth(tp);
+  const { status, data } = await call({ action: 'search', mode: 'ow', from: 'VIE', to: 'LHR', date: d0, flex: 3, smart_flex: true },
+    { env: TP_ENV, deps: { fetch: s.fetch, cache: null } });
+  assert.equal(status, 200);
+  assert.deepEqual(s.calls.serp.map(c => c.outbound_date).sort(), [addDays(d0, -3), d0, addDays(d0, 2)].sort());
+  assert.equal(s.calls.tp[0].token, 'tp');
+  assert.equal(s.calls.tp[0].currency, 'eur');
+  assert.equal(data.smart.checked, 7);
+  assert.equal(data.smart.kept, 3);
+  assert.equal(data.smart.hints[addDays(d0, 2)], 60);
+});
+
+test('Vorauswahl Hin & Rück: gleiche Aufenthaltsdauer, Einzeltickets nur für gewählte Tage', async () => {
+  const d0 = inDays(20), r0 = addDays(d0, 7);
+  const tp = { [addDays(d0, -2)]: 300, [addDays(d0, -1)]: 180, [d0]: 250, [addDays(d0, 1)]: 170, [addDays(d0, 2)]: 400 };
+  const s = fakeBoth(tp);
+  const { data } = await call({ action: 'search', mode: 'rt', from: 'VIE', to: 'LHR', date: d0, return_date: r0,
+    flex: 2, smart_flex: true, compare_oneways: true }, { env: TP_ENV, deps: { fetch: s.fetch, cache: null } });
+  const pairs = s.calls.serp.filter(c => c.type === '1').map(c => `${c.outbound_date}|${c.return_date}`).sort();
+  assert.deepEqual(pairs, [d0, addDays(d0, -1), addDays(d0, 1)].map(d => `${d}|${addDays(d, 7)}`).sort());
+  assert.equal(s.calls.serp.filter(c => c.type === '2').length, 6);
+  assert.ok(s.calls.tp.every(c => c.min_trip_duration === '7' && c.max_trip_duration === '7'));
+  assert.equal(data.stats.queries, 9);
+});
+
+test('Vorauswahl: ohne Travelpayouts-Daten wird normal gesucht', async () => {
+  const s = fakeBoth({});
+  await call({ action: 'search', mode: 'ow', from: 'VIE', to: 'LHR', date: inDays(20), flex: 1, smart_flex: true },
+    { env: TP_ENV, deps: { fetch: s.fetch, cache: null } });
+  assert.equal(s.calls.serp.length, 3);
+});
+
+test('Vorauswahl: ohne Token kein Travelpayouts-Aufruf', async () => {
+  const s = fakeBoth({ [inDays(20)]: 1 });
+  await call({ action: 'search', mode: 'ow', from: 'VIE', to: 'LHR', date: inDays(20), flex: 1, smart_flex: true },
+    { deps: { fetch: s.fetch, cache: null } });
+  assert.equal(s.calls.tp.length, 0);
+  assert.equal(s.calls.serp.length, 3);
+});
+
+test('Kalender: Monatspreise, braucht keinen SerpAPI-Key', async () => {
+  const month = inDays(40).slice(0, 7);
+  const s = fakeBoth({ [`${month}-05`]: 80, [`${month}-12`]: 55 });
+  const { status, data } = await call({ action: 'calendar', from: 'VIE', to: 'LHR', month },
+    { env: { TRAVELPAYOUTS_TOKEN: 'tp' }, deps: { fetch: s.fetch, cache: null } });
+  assert.equal(status, 200);
+  assert.equal(data.available, true);
+  assert.equal(data.days[`${month}-12`].price, 55);
+  assert.equal(s.calls.serp.length, 0);
+});
+
+test('Kalender: ohne Token "nicht verfügbar"', async () => {
+  const { data } = await call({ action: 'calendar', from: 'VIE', to: 'LHR', month: '2026-12' }, { deps: { cache: null } });
+  assert.equal(data.available, false);
+});

@@ -2,6 +2,7 @@
 #
 # Benötigte Repository-Secrets (Settings → Secrets and variables → Actions):
 #   SERPAPI_KEY            – SerpAPI-Key, wird als Worker-Secret hinterlegt
+#   TRAVELPAYOUTS_TOKEN    – Travelpayouts-API-Token (Gratis-Richtpreise), ebenfalls Worker-Secret
 #   CLOUDFLARE_API_TOKEN   – Cloudflare-API-Token (Vorlage „Edit Cloudflare Workers")
 #   CLOUDFLARE_ACCOUNT_ID  – Cloudflare Account-ID
 # Optionale Repository-Variable:
@@ -46,8 +47,10 @@ jobs:
           command: deploy
           secrets: |
             SERPAPI_KEY
+            TRAVELPAYOUTS_TOKEN
         env:
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          TRAVELPAYOUTS_TOKEN: ${{ secrets.TRAVELPAYOUTS_TOKEN }}
       - name: Worker-URL ermitteln
         id: url
         env:
