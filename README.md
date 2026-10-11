@@ -16,6 +16,8 @@ Eine Suche wird im Backend in mehrere SerpAPI-Abfragen aufgefächert, parallel a
 | **Max. Preis** | `max_price`-Filter. |
 | **Genaue Preise** | `deep_search` – dieselben Preise wie im Browser, dafür langsamer. |
 | **Entdecken** | `google_travel_explore` – günstigste Ziele ab einem Flughafen. |
+| **Günstige Tage vorab gratis prüfen** | Bei flexiblen Daten werden zuerst kostenlos die Richtpreise von Travelpayouts (Aviasales Data API) geprüft; live per SerpAPI abgefragt werden nur der Wunschtag und die 2 günstigsten anderen Tage. |
+| **Monatsübersicht** | Nach jeder Suche: Richtpreise für jeden Tag des Monats (gratis, Travelpayouts). Klick auf einen Tag startet die Live-Suche. |
 
 Außerdem: `show_hidden=true`, Google-Preiseinschätzung (`price_insights`) und Standard-Sortierung nach Preis.
 Hin- & Rückflüge sowie Multi-City-Strecken werden über `departure_token` Schritt für Schritt gewählt (der angezeigte Preis ist bereits der Gesamtpreis). Gebucht wird über die Buchungsoptionen von Google (`booking_token`).
@@ -30,6 +32,7 @@ Beides deployt `.github/workflows/deploy.yml` bei jedem Push auf `main`. Die Wor
    Die **Account-ID** steht auf der Übersichtsseite von *Workers & Pages*.
 2. **GitHub → Settings → Secrets and variables → Actions → Secrets:**
    - `SERPAPI_KEY` – SerpAPI-Key
+   - `TRAVELPAYOUTS_TOKEN` – API-Token aus dem Travelpayouts-Profil (für Richtpreise und Vorauswahl)
    - `CLOUDFLARE_API_TOKEN` – der Token aus Schritt 1
    - `CLOUDFLARE_ACCOUNT_ID` – die Account-ID
 3. **GitHub → Settings → Pages:** Source = **GitHub Actions**.
@@ -39,6 +42,7 @@ Optional in `wrangler.toml` unter `[vars]`:
 - `ALLOWED_ORIGINS` – erlaubte Seiten (Standard `https://henryai-stack.github.io`; bei eigener Domain ergänzen)
 - `MAX_QUERIES` – max. SerpAPI-Abfragen pro Suche (Standard 40)
 - `CACHE_TTL` – Cache-Dauer in Sekunden (Standard 7200, `0` = aus)
+- `TP_CACHE_TTL` – Cache-Dauer für Travelpayouts-Daten in Sekunden (Standard 21600)
 
 Optionale Repository-Variable `API_URL`: feste API-Adresse (z. B. eigene Domain) statt der `workers.dev`-URL.
 

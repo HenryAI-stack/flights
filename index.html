@@ -261,6 +261,23 @@
     .cal td button.sel{outline:2px solid var(--sky);outline-offset:1px}
     .cal td button.req{text-decoration:underline}
     .cal td button:disabled{opacity:.4;cursor:default}
+
+    /* Monatsübersicht (Travelpayouts, Richtwerte) */
+    .month{background:var(--surface);border:.5px solid var(--border);border-radius:12px;padding:12px 1.25rem;margin-bottom:12px;box-shadow:var(--sh)}
+    .month-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+    .month-title{font-size:14px;font-weight:600}
+    .month-nav{background:none;border:.5px solid var(--border-med);border-radius:6px;padding:4px 10px;cursor:pointer;color:var(--text-2);font-size:13px}
+    .month-nav:disabled{opacity:.35;cursor:default}
+    .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+    .month-dow{font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-3);text-align:center}
+    .mday{border:.5px solid var(--border);border-radius:6px;background:var(--surface);padding:4px 2px;text-align:center;cursor:pointer;min-height:42px;color:var(--text-1)}
+    .mday .n{display:block;font-size:11px;color:var(--text-2)}
+    .mday .p{display:block;font-size:12px;font-weight:600}
+    .mday.cheap{background:var(--green-light);border-color:var(--green)}
+    .mday.cheap .p{color:var(--green)}
+    .mday.sel{outline:2px solid var(--sky);outline-offset:1px}
+    .mday:disabled{cursor:default;opacity:.45}
+    .mday.empty{visibility:hidden}
     .cal .sep{display:block;font-size:9px;font-weight:500;color:var(--text-3)}
     .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center}
     .chip{padding:5px 10px;border:.5px solid var(--border-med);border-radius:20px;background:var(--surface);font-size:12px;cursor:pointer;color:var(--text-1)}
@@ -486,6 +503,7 @@
         <label class="chk" data-modes="rt mc"><input type="checkbox" id="opt-oneways" checked/> Mit Einzeltickets vergleichen</label>
         <label class="chk" data-modes="ow rt mc"><input type="checkbox" id="opt-countries"/> Verkaufsländer vergleichen</label>
         <label class="chk" data-modes="ow rt mc"><input type="checkbox" id="opt-deep" checked/> Genaue Preise <small>(langsamer)</small></label>
+        <label class="chk" data-modes="ow rt"><input type="checkbox" id="opt-smart" checked/> Günstige Tage vorab gratis prüfen <small>(spart Abfragen bei flexiblen Daten)</small></label>
       </div>
     </div>
 
@@ -495,6 +513,7 @@
 
   <section class="results" id="results" style="display:none">
     <div id="results-summary"></div>
+    <div id="results-month"></div>
     <div id="results-calendar"></div>
     <div id="results-extra"></div>
     <div class="results-header">
@@ -1174,6 +1193,7 @@ function savingOpts(){
     compare_oneways:   $('opt-oneways').checked,
     compare_countries: $('opt-countries').checked,
     deep_search:       $('opt-deep').checked,
+    smart_flex:        $('opt-smart').checked,
     bags:              $('opt-bags').value,
     max_price:         $('opt-max').value,
     flex:              $('opt-flex').value,
@@ -1242,8 +1262,13 @@ function buildBody(){
 function estimateQueries(){
   const o=savingOpts(), c=o.compare_countries?4:0;
   if(st.tab==='ex') return 1;
-  if(st.tab==='ow') return 2*Math.min(+o.flex,3)+1+c;
-  if(st.tab==='rt'){ const n=2*Math.min(+o.flex,2)+1; return n*n+(o.compare_oneways?2*n:0)+c; }
+  // Mit Gratis-Vorauswahl werden höchstens 3 Tage live abgefragt
+  if(st.tab==='ow') return Math.min(2*Math.min(+o.flex,3)+1, o.smart_flex?3:99)+c;
+  if(st.tab==='rt'){
+    const n=2*Math.min(+o.flex,2)+1;
+    if(o.smart_flex&&n>1) return 3+(o.compare_oneways?6:0)+c;
+    return n*n+(o.compare_oneways?2*n:0)+c;
+  }
   const legs=document.querySelectorAll('.multi-seg').length+1;
   return 1+(o.compare_oneways?legs:0)+c;
 }
@@ -1421,6 +1446,13 @@ const legLabel=i=>S.data.mode==='rt'?(i?'Rückflug':'Hinflug'):S.data.mode==='mc
 
 function renderSearch(data){
   S.data=data; S.explore=null;
+  // Monatsübersicht (gratis) für die gesuchte Strecke laden
+  if(data.mode==='ow'||data.mode==='rt'){
+    const q=data.requested;
+    S.monthQ={from:q.from, to:q.to, stops:(data.mode==='rt'?$('rt-stops'):$('ow-stops')).value,
+      tripDays:data.mode==='rt'?isoDiff(q.date,q.returnDate):null, sel:q.date, mode:data.mode};
+    loadMonth(q.date.slice(0,7));
+  } else { S.monthQ=null; $('results-month').innerHTML=''; }
   $('sort-bar').style.display='';
   // Vorauswahl: günstigstes Datum (inkl. Einzeltickets)
   let best=-1, bp=Infinity;
@@ -1435,6 +1467,61 @@ function selectResult(i){
   S.views=[{flights:r.flights, query:r.query, chosen:[]}];
   $('results').style.display='block';
   renderSummary(); renderCalendar(); renderExtra(); renderList();
+}
+
+/* ── Monatsübersicht (Travelpayouts, Richtwerte) ─────────── */
+const isoAdd=(iso,n)=>{ const d=new Date(iso+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); };
+const isoDiff=(a,b)=>Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/864e5);
+const MONTHS=['Jänner','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+async function loadMonth(month){
+  const q=S.monthQ; if(!q) return;
+  q.month=month;
+  $('results-month').innerHTML='<div class="month"><span class="muted">Lade Monatspreise …</span></div>';
+  try{
+    const r=await api({action:'calendar', from:q.from, to:q.to, month, trip_days:q.tripDays, stops:q.stops});
+    if(S.monthQ!==q||q.month!==month) return;          // inzwischen neue Suche/Monat
+    if(!r.available){ $('results-month').innerHTML=''; return; }
+    renderMonth(r.days||{}, month);
+  }catch{ if(S.monthQ===q) $('results-month').innerHTML=''; }
+}
+
+function renderMonth(days, month){
+  const q=S.monthQ, today=new Date().toISOString().slice(0,10);
+  const [y,m]=month.split('-').map(Number);
+  const first=new Date(Date.UTC(y,m-1,1)), len=new Date(Date.UTC(y,m,0)).getUTCDate();
+  const offset=(first.getUTCDay()+6)%7;                 // Montag zuerst
+  const prices=Object.values(days).map(d=>d.price);
+  const min=prices.length?Math.min(...prices):null;
+  const prev=`${m===1?y-1:y}-${String(m===1?12:m-1).padStart(2,'0')}`;
+  const next=`${m===12?y+1:y}-${String(m===12?1:m+1).padStart(2,'0')}`;
+  let cells=['Mo','Di','Mi','Do','Fr','Sa','So'].map(d=>`<div class="month-dow">${d}</div>`).join('');
+  cells+='<div class="mday empty"></div>'.repeat(offset);
+  for(let day=1; day<=len; day++){
+    const iso=`${month}-${String(day).padStart(2,'0')}`, t=days[iso];
+    const cls=['mday', t&&t.price===min?'cheap':'', iso===q.sel?'sel':''].join(' ');
+    const tip=t?`${t.airline||''}${t.transfers===0?' · direkt':t.transfers?` · ${t.transfers} Stopp`:''}`:'keine Daten';
+    cells+=`<button class="${cls}" data-day="${iso}" ${iso<today?'disabled':''} title="${esc(tip)}"><span class="n">${day}</span><span class="p">${t?fmt(t.price):'–'}</span></button>`;
+  }
+  const what=q.mode==='rt'?`Hin & Rück, ${q.tripDays} Tage Aufenthalt`:'Einzelflug';
+  $('results-month').innerHTML=`<div class="month">
+    <div class="month-head">
+      <button class="month-nav" data-month="${prev}" ${prev<today.slice(0,7)?'disabled':''}>◀</button>
+      <div style="text-align:center"><div class="month-title">${MONTHS[m-1]} ${y} · ${esc(what)}</div>
+        <div class="muted">Richtpreise (Aviasales, letzte Tage) – Tag anklicken für Live-Suche</div></div>
+      <button class="month-nav" data-month="${next}">▶</button>
+    </div>
+    <div class="month-grid">${cells}</div>
+    ${prices.length?'':'<p class="muted" style="margin-top:8px">Für diesen Monat liegen keine Richtpreise vor.</p>'}
+  </div>`;
+}
+
+function pickMonthDay(iso){
+  const q=S.monthQ; if(!q) return;
+  if(q.mode==='rt'){ selectDate('di-rt-dep',iso); selectDate('di-rt-ret',isoAdd(iso,q.tripDays)); }
+  else selectDate('di-ow-date',iso);
+  window.scrollTo({top:0,behavior:'smooth'});
+  doSearch();
 }
 
 function renderSummary(){
@@ -1464,6 +1551,7 @@ function renderSummary(){
   const stats=d.stats||{};
   let meta=`${stats.queries||0} Abfragen · ${stats.cached||0} aus Cache`;
   if(d.errors?.length) meta+=` · ${d.errors.length} fehlgeschlagen`;
+  if(d.smart?.kept) meta+=` · Vorauswahl: ${d.smart.checked} Tage gratis geprüft, ${d.smart.kept} live abgefragt`;
   lines.push(`<span class="muted">${meta}</span>`);
   $('results-summary').innerHTML=`<div class="summary">${lines.map(l=>`<div>${l}</div>`).join('')}</div>`;
 }
@@ -1641,10 +1729,10 @@ function openBookingRequest(req){
 
 /* ── Entdecken ────────────────────────────────────────────── */
 function renderExplore(data, body){
-  S.data=null;
+  S.data=null; S.monthQ=null;
   S.explore={list:data.destinations||[], query:data.query, from:body.from.toUpperCase().split(',')[0].trim()};
   $('results').style.display='block';
-  ['results-summary','results-calendar','results-extra','results-step'].forEach(id=>$(id).innerHTML='');
+  ['results-summary','results-month','results-calendar','results-extra','results-step'].forEach(id=>$(id).innerHTML='');
   $('sort-bar').style.display='none';
   const list=S.explore.list;
   $('results-title').textContent=list.length?`${list.length} Ziele ab ${S.explore.from} – günstigste zuerst`:'Keine Ziele gefunden';
@@ -1679,8 +1767,9 @@ function exploreGo(i){
 }
 
 function renderErr(msg){
+  S.monthQ=null;
   $('results').style.display='block';
-  ['results-summary','results-calendar','results-extra','results-step'].forEach(id=>$(id).innerHTML='');
+  ['results-summary','results-month','results-calendar','results-extra','results-step'].forEach(id=>$(id).innerHTML='');
   $('results-title').textContent='';
   $('sort-bar').style.display='none';
   $('results-list').innerHTML=`<div class="no-res err">${esc(msg)}</div>`;
@@ -1766,6 +1855,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Klicks in den Ergebnissen (Kalender, Länder, Karten, Buchung)
   $('results').addEventListener('click',e=>{
+    const mn=e.target.closest('[data-month]');
+    if(mn&&!mn.disabled){ loadMonth(mn.dataset.month); return; }
+    const md=e.target.closest('[data-day]');
+    if(md&&!md.disabled){ pickMonthDay(md.dataset.day); return; }
     const res=e.target.closest('[data-res]');
     if(res&&!res.disabled){ selectResult(+res.dataset.res); return; }
     const a=e.target.closest('[data-act]');
