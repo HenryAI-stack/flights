@@ -167,7 +167,9 @@
 
     /* Flugzeiten: Abflug | Dauer | Ankunft */
     .fl-top{display:flex;align-items:center;gap:8px;padding:12px 1.25rem 0;flex-wrap:wrap}
-    .fl-airlines{font-size:12px;color:var(--text-2)}
+    .fl-airlines{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;font-weight:500;color:var(--text-1)}
+    .fl-al{display:inline-flex;align-items:center;gap:6px}
+    .fl-al .tl-logo,.fl-al .tl-logo-fb{width:28px;height:28px;padding:1px}
     .fl-main{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:8px 1.25rem 12px}
     .fl-t{font-size:24px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
     .fl-ap{font-size:14px;font-weight:600;color:var(--text-1)}
@@ -1325,14 +1327,19 @@ function legHtml(f, labelClass, labelText){
   const dep = splitTime(depA.time), arr = splitTime(arrA.time);
   const stops = lays.length;
   const stopTxt = stops===0 ? 'Direktflug' : `${stops} Stopp${stops>1?'s':''}`;
-  const airlines = [...new Set(segs.map(s=>s.airline).filter(Boolean))].join(', ');
   const dur = fmtDur(f.total_duration);
+
+  // Airlines mit Logo (je Airline einmal); bei Direktflug mit Flugnummer
+  const seen = new Set();
+  const airlineTags = segs.filter(s=>s.airline&&!seen.has(s.airline)&&seen.add(s.airline)).map(s=>
+    `<span class="fl-al">${tlLogo(s)}<span>${esc(s.airline)}${segs.length===1&&s.flight_number?` · ${esc(s.flight_number)}`:''}</span></span>`
+  ).join('') || '<span class="fl-al">Airline unbekannt</span>';
 
   // Kopf: Abflug | Dauer/Stopps | Ankunft – Uhrzeit groß, Datum darunter
   const head = `
     <div class="fl-top">
       ${labelText ? `<span class="fleg-label ${labelClass}">${labelText}</span>` : ''}
-      <span class="fl-airlines">${esc(airlines||'Airline unbekannt')}</span>
+      <span class="fl-airlines">${airlineTags}</span>
     </div>
     <div class="fl-main">
       <div class="fl-end">
@@ -1378,10 +1385,8 @@ function legHtml(f, labelClass, labelText){
       </div>${layHtml}`;
   }).join('');
 
-  // Direktflug: Kopfzeile reicht; Flugnummer neben der Airline
-  if(segs.length<=1) return `<div class="fleg">${head.replace(
-    `<span class="fl-airlines">${esc(airlines||'Airline unbekannt')}</span>`,
-    `<span class="fl-airlines">${esc([airlines||'Airline unbekannt', first.flight_number].filter(Boolean).join(' · '))}</span>`)}</div>`;
+  // Direktflug: Kopfzeile reicht
+  if(segs.length<=1) return `<div class="fleg">${head}</div>`;
   return `<div class="fleg">${head}<div class="fl-segs">${rows}</div></div>`;
 }
 
@@ -1687,6 +1692,15 @@ function setSearching(on){
   else   updateOpts();
 }
 
+/* Abflugdatum beim Tab-Wechsel mitnehmen (Einzelflug ↔ Hin & Rück ↔ Trip-Planer) */
+const DEP_DATE_PICKER={ow:'di-ow-date', rt:'di-rt-dep', mc:'di-mc-start'};
+function syncDepartureDate(from, to){
+  const src=DEP_DATE_PICKER[from], dst=DEP_DATE_PICKER[to];
+  const iso=src&&getDate(src);
+  if(!iso||!dst||getDate(dst)===iso) return;
+  selectDate(dst, iso);   // passt Rückflug/Folgedaten an, falls sie davor liegen
+}
+
 function switchTab(tab){
   const prev=st.tab;
   st.tab=tab;
@@ -1694,6 +1708,7 @@ function switchTab(tab){
   document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
   $('tab-'+tab).style.display='block';
   syncAirports(prev, tab);
+  syncDepartureDate(prev, tab);
   updateOpts();
   hideRes();
 }
