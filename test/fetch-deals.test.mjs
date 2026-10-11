@@ -26,16 +26,6 @@ test('RSS: nur Deals ab Warschau, mit Preis, Ziel, Datum und Status', () => {
   assert.equal(deals[1].expired, true);
 });
 
-test('Suchseite als Fallback: Deal-Links ab Warschau', () => {
-  const html = `<div><a href="https://www.secretflying.com/posts/warsaw-bangkok/"><h2>Warsaw, Poland to Bangkok, Thailand for only 1599 PLN roundtrip</h2></a>
-    <a href="https://www.secretflying.com/posts/warsaw-bangkok/">mehr</a>
-    <a href="https://www.secretflying.com/posts/vienna-rome/">Vienna, Austria to Rome, Italy for only €29</a></div>`;
-  const deals = parseSearchPage(html);
-  assert.equal(deals.length, 1);
-  assert.equal(deals[0].to, 'Bangkok, Thailand');
-  assert.equal(deals[0].price, '1599 PLN');
-});
-
 test('Expired im Titel wird erkannt und entfernt', () => {
   const d = toDeal({ title: 'EXPIRED: Warsaw, Poland to Lisbon, Portugal for only €49 one way', link: 'x' });
   assert.equal(d.expired, true);
@@ -43,15 +33,23 @@ test('Expired im Titel wird erkannt und entfernt', () => {
   assert.equal(d.trip, 'oneway');
 });
 
-test('Suchseite: relative Links, title-Attribut und URL-Slug als Titel', () => {
-  const html = `<a href="/posts/warsaw-poland-to-oslo-norway-for-only-19-one-way/"><img src="x.jpg"></a>
-    <a title="Warsaw, Poland to Rome, Italy for only €25 roundtrip" href="https://www.secretflying.com/posts/x-rome/"><img></a>
-    <a href="https://www.secretflying.com/posts/vienna-austria-to-rome-italy/">Vienna</a>`;
+test('Suchseite (echte Struktur): Artikel, Sammeldeals, abgelaufen, gesperrte/Werbe-Kacheln übersprungen', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const html = await readFile(new URL('./fixtures/secretflying-search.html', import.meta.url), 'utf8');
   const deals = parseSearchPage(html);
-  assert.equal(deals.links, 3);
-  assert.equal(deals.length, 2);
-  assert.equal(deals[0].link, 'https://www.secretflying.com/posts/warsaw-poland-to-oslo-norway-for-only-19-one-way/');
-  assert.equal(deals[0].trip, 'oneway');
-  assert.equal(deals[1].to, 'Rome, Italy');
-  assert.equal(deals[1].price, '€25');
+  assert.equal(deals.articles, 5);              // Werbekachel zählt nicht, gesperrter Deal schon
+  assert.equal(deals.length, 4);                 // gesperrter Business-Deal ohne Titel fällt weg
+  const [mombasa, sharjah, expired, cairo] = deals;
+  assert.equal(mombasa.title, 'Katowice or Warsaw, Poland to Mombasa, Kenya from only €335 roundtrip');
+  assert.equal(mombasa.from, 'Katowice or Warsaw, Poland');
+  assert.equal(mombasa.to, 'Mombasa, Kenya');
+  assert.equal(mombasa.price, '€335');
+  assert.equal(mombasa.date, '2026-10-04');
+  assert.equal(mombasa.expired, false);
+  assert.equal(sharjah.from, 'European cities (inkl. Warschau)');
+  assert.equal(sharjah.to, 'Sharjah, UAE');
+  assert.equal(expired.expired, true);
+  assert.equal(expired.title, 'Warsaw, Poland to Mombasa, Kenya for only €256 roundtrip');
+  assert.equal(cairo.price, '€201');
+  assert.equal(cairo.date, '2026-08-22');
 });

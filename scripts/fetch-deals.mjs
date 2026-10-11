@@ -9,6 +9,9 @@ const RSS_URL     = `https://www.secretflying.com/?s=${CITY}&feed=rss2`;
 const SEARCH_URL  = `https://www.secretflying.com/search2/?cityFrom=${CITY}&month=&showOldDeals=on&cityTo=`;
 const MAX_DEALS   = 60;
 const RSS_PAGES   = 8;       // WordPress liefert je Feed-Seite ~10 Suchtreffer
+const SEARCH_PAGES = 6;      // Suchseite: ~10 Deals je Seite (inkl. alter Deals)
+const searchPageUrl = n => n === 1 ? SEARCH_URL
+  : `https://www.secretflying.com/search2/page/${n}/?cityFrom=${CITY}&month=&showOldDeals=on&cityTo=`;
 const USER_AGENT  = 'Mozilla/5.0 (compatible; SkySearchDeals/1.0; +https://henryai-stack.github.io/flights/)';
 
 const decode = s => String(s || '')
@@ -24,17 +27,27 @@ const PRICE_RE = /(?:€|\$|£)\s?\d[\d.,]*|\d[\d.,]*\s?(?:€|EUR|PLN|zł|USD|G
 
 /* "Warsaw, Poland to Tokyo, Japan for only €389 roundtrip" → Deal-Objekt,
    oder null, wenn der Deal nicht ab Warschau geht. */
-export function toDeal({ title, link, date, expired = false }) {
+export function toDeal({ title, link, date, expired = false }, { fromCityPage = false } = {}) {
   title = decode(title);
   if (!title || !link) return null;
   const isExpired = expired || /\bexpired\b/i.test(title);
-  const clean = title.replace(/^\s*(?:\[?expired\]?\s*[-:–]?\s*)/i, '');
+  const clean = title
+    .replace(/\*+\s*expired\s*\*+|\[?expired\]?\s*[-:–]/gi, '')
+    .replace(/^[^\p{L}\d]+/u, '')                          // Emojis, Zeichen am Anfang
+    .replace(/^(?:[A-Z][A-Z0-9 '!&-]*:\s*)+/, '')             // "LAST MINUTE:", "ERROR FARE:"
+    .trim();
   const m = clean.match(/^(.*?)\s+to\s+(.+?)(?:\s+for\s+(?:only\s+)?(.*))?$/i);
-  if (!m || !new RegExp(`\\b${CITY}\\b`, 'i').test(m[1])) return null;
+  if (!m) return null;
+  const viaCity = new RegExp(`\\b${CITY}\\b`, 'i').test(m[1]);
+  // Auf der Städte-Suchseite gehören alle Deals zu Warschau (auch "European cities to …")
+  if (!viaCity && !fromCityPage) return null;
   const price = (m[3] || clean).match(PRICE_RE)?.[0] || null;
   return {
     title: clean,
-    from: m[1].replace(/^(?:non-?stop|direct)\s+(?:flights?\s+)?from\s+/i, '').replace(/^from\s+/i, '').trim(),
+    from: (() => {
+      const f = m[1].replace(/^(?:non-?stop|direct)\s+(?:flights?\s+)?from\s+/i, '').replace(/^from\s+/i, '').trim();
+      return viaCity ? f : `${f} (inkl. Warschau)`;
+    })(),
     to: m[2].replace(/\s+(?:for|from)\s+.*$/i, '').trim(),
     price,
     trip: /one[- ]?way/i.test(clean) ? 'oneway' : /round[- ]?trip|return/i.test(clean) ? 'roundtrip' : null,
@@ -54,26 +67,31 @@ export function parseRss(xml) {
   return items.map(toDeal).filter(Boolean);
 }
 
-/* Slug "warsaw-poland-to-tokyo-japan-for-only-389-roundtrip" → lesbarer Titel */
-const slugTitle = href => (href.match(/\/posts\/([^/]+)\/?$/)?.[1] || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-
-/* Suchseite: Links auf Deal-Beiträge lesen. Titel aus Linktext, title-Attribut
-   oder notfalls aus dem URL-Slug. Liefert auch die Zahl aller Deal-Links (Diagnose). */
+/* Suchseite (search2): jeder Deal ist ein <article class="post-123 … category-warsaw …">
+   mit <a class="title-link" href="…">Titel</a>, <time class="entry-date">Oct 4, 2026</time>
+   und bei abgelaufenen Deals dem Bild EXPIRED1.gif. Werbe- und gesperrte Kacheln
+   (Business-Deals nur für Premium) haben keinen title-link und werden übersprungen. */
 export function parseSearchPage(html) {
-  const seen = new Set();
   const deals = [];
-  let links = 0;
-  const re = /<a\b([^>]*)href="((?:https:\/\/www\.secretflying\.com)?\/posts\/[^"#?]+)"([^>]*)>([\s\S]*?)<\/a>/gi;
-  for (const [, pre, rawHref, post, inner] of String(html).matchAll(re)) {
-    links++;
-    const href = rawHref.startsWith('/') ? `https://www.secretflying.com${rawHref}` : rawHref;
-    if (seen.has(href)) continue;
-    const attrTitle = `${pre} ${post}`.match(/title="([^"]+)"/)?.[1];
-    const d = toDeal({ title: inner, link: href }) || (attrTitle && toDeal({ title: attrTitle, link: href }))
-      || toDeal({ title: slugTitle(href), link: href });
-    if (d) { seen.add(href); deals.push(d); }
+  let articles = 0;
+  for (const [art] of String(html).matchAll(/<article\b[\s\S]*?<\/article>/gi)) {
+    const cls = art.match(/^<article\b[^>]*class="([^"]*)"/i)?.[1] || '';
+    if (!/\bpost-\d+/.test(cls)) continue;
+    articles++;
+    const tag = art.match(/<a\b([^>]*class="[^"]*\btitle-link\b[^"]*"[^>]*)>([\s\S]*?)<\/a>/i);
+    const href = tag?.[1].match(/href="([^"]+)"/)?.[1];
+    if (!href || !/\/posts\//.test(href)) continue;
+    const title = decode(tag[2]) || decode(tag[1].match(/title="([^"]+)"/)?.[1]);
+    const when = decode(art.match(/<time\b[^>]*>([\s\S]*?)<\/time>/i)?.[1]);
+    const ts = when ? Date.parse(`${when} UTC`) : NaN;
+    const d = toDeal({
+      title, link: href,
+      date: Number.isNaN(ts) ? null : new Date(ts).toISOString(),
+      expired: /EXPIRED1\.gif|\*\*EXPIRED\*\*/i.test(art),
+    }, { fromCityPage: new RegExp(`\\bcategory-${CITY.toLowerCase()}\\b`).test(cls) });
+    if (d) deals.push(d);
   }
-  deals.links = links;
+  deals.articles = articles;
   return deals;
 }
 
@@ -91,7 +109,24 @@ async function main() {
   const byLink = new Map();
   const counts = {};
 
-  // 1) RSS-Feed der Suche, mehrere Seiten (beste Daten: Titel, Datum, Status)
+  // 1) Suchseite der Städte-Suche (alle Deals ab Warschau, mit Datum und Status)
+  counts.search = 0;
+  for (let page = 1; page <= SEARCH_PAGES; page++) {
+    try {
+      const html = await get(searchPageUrl(page));
+      const found = parseSearchPage(html);
+      console.log(`Suchseite ${page}: ${html.length} Zeichen, ${found.articles} Beiträge, davon ${found.length} lesbar`);
+      if (page === 1 && !found.articles) problems.push('search: keine Deal-Beiträge im HTML gefunden');
+      for (const d of found) if (!byLink.has(d.link)) { byLink.set(d.link, d); counts.search++; }
+      if (!found.articles) break;
+    } catch (e) {
+      if (page === 1) problems.push(`search: ${e.message}`);
+      else console.log(`Suchseite ${page}: ${e.message} – Ende`);
+      break;
+    }
+  }
+
+  // 2) RSS-Feed der Textsuche ergänzt, was die Suchseite nicht liefert
   counts.rss = 0;
   for (let page = 1; page <= RSS_PAGES; page++) {
     try {
@@ -107,16 +142,6 @@ async function main() {
       break;
     }
   }
-
-  // 2) Suchseite mit älteren Deals (ergänzt, was der Feed nicht liefert)
-  counts.search = 0;
-  try {
-    const html = await get(SEARCH_URL);
-    const found = parseSearchPage(html);
-    console.log(`Suchseite: ${html.length} Zeichen, ${found.links} Deal-Links, davon ${found.length} ab ${CITY}`);
-    if (!found.links) problems.push('search: keine Deal-Links im HTML (Seite lädt Ergebnisse vermutlich per JavaScript)');
-    for (const d of found) if (!byLink.has(d.link)) { byLink.set(d.link, d); counts.search++; }
-  } catch (e) { problems.push(`search: ${e.message}`); }
 
   const deals = [...byLink.values()];
   const source = Object.entries(counts).filter(([, n]) => n).map(([k, n]) => `${k}:${n}`).join(', ') || null;
