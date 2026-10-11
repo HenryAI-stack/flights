@@ -207,7 +207,62 @@
     .setup-box h3{font-size:13px;font-weight:600;color:#0047cc;margin-bottom:8px}
     code{background:var(--surface-2);border:.5px solid var(--border);border-radius:4px;padding:1px 5px;font-size:12px;font-family:monospace;color:var(--text-1)}
 
+    /* Spar-Optionen */
+    .opts{border-top:.5px solid var(--border);margin-top:4px;padding-top:14px}
+    .opts-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);margin-bottom:10px}
+    .chk-row{display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:12px}
+    .chk{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-1);cursor:pointer}
+    .chk input{accent-color:var(--sky);width:15px;height:15px}
+    .chk small{color:var(--text-3)}
+    .qcount{font-size:12px;color:var(--text-3);margin-top:8px;text-align:center}
+
+    /* Ergebnis-Zusammenfassung, Kalender, Vergleiche */
+    .summary{background:var(--surface);border:.5px solid var(--border);border-radius:12px;padding:12px 1.25rem;margin-bottom:12px;font-size:13px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:4px}
+    .summary strong{color:var(--green)}
+    .pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:4px}
+    .pill.low{background:var(--green-light);color:var(--green)}
+    .pill.typical{background:var(--surface-2);color:var(--text-2)}
+    .pill.high{background:#fdecea;color:#c0392b}
+    .muted{color:var(--text-3);font-size:12px}
+    .cal{overflow-x:auto;margin-bottom:12px}
+    .cal table{border-collapse:separate;border-spacing:3px;font-size:12px;margin-top:4px}
+    .cal th{font-weight:600;color:var(--text-2);padding:4px 6px;white-space:nowrap;font-size:11px;text-align:center}
+    .cal td button{width:100%;min-width:66px;padding:7px 4px;border:.5px solid var(--border-med);border-radius:6px;background:var(--surface);color:var(--text-1);cursor:pointer;font-size:12px;font-weight:600}
+    .cal td button.cheap{background:var(--green-light);color:var(--green);border-color:var(--green)}
+    .cal td button.sel{outline:2px solid var(--sky);outline-offset:1px}
+    .cal td button.req{text-decoration:underline}
+    .cal td button:disabled{opacity:.4;cursor:default}
+    .cal .sep{display:block;font-size:9px;font-weight:500;color:var(--text-3)}
+    .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center}
+    .chip{padding:5px 10px;border:.5px solid var(--border-med);border-radius:20px;background:var(--surface);font-size:12px;cursor:pointer;color:var(--text-1)}
+    .chip.sel{background:var(--sky);color:#fff;border-color:var(--sky)}
+    .chip.cheap:not(.sel){border-color:var(--green);color:var(--green)}
+    .fcard.deal{border:1px solid var(--green)}
+    .deal-bar{background:var(--green-light);color:var(--green);font-size:12px;font-weight:600;padding:8px 1.25rem}
+    .btn-sec{display:inline-flex;align-items:center;padding:8px 12px;background:none;border:.5px solid var(--border-med);border-radius:8px;color:var(--text-2);font-size:12px;text-decoration:none;cursor:pointer}
+    .btn-sec:hover{background:var(--surface)}
+    .fcard-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+    .step-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+    .chosen .fcard{opacity:.8}
+    .best-tag{font-size:10px;font-weight:600;color:var(--sky);text-transform:uppercase;letter-spacing:.06em;margin-left:6px}
+
+    /* Entdecken */
+    .dest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+    .dest{background:var(--surface);border:.5px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:var(--sh);display:flex;flex-direction:column}
+    .dest img{width:100%;height:110px;object-fit:cover;background:var(--surface-2)}
+    .dest-body{padding:10px 12px 12px;flex:1;display:flex;flex-direction:column;gap:3px}
+    .dest-name{font-weight:600;font-size:14px}
+    .dest-meta{font-size:12px;color:var(--text-2)}
+    .dest-price{font-size:17px;font-weight:700;color:var(--sky);margin-top:auto;padding:6px 0}
+
+    /* Buchungsoptionen */
+    .bopt{border:.5px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .bopt-name{font-size:13px;font-weight:600}
+    .bopt-sub{font-size:11px;color:var(--text-2)}
+    .bopt-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+
     @media(max-width:640px){
+      .fcard-footer{flex-wrap:wrap;gap:8px}
       .form-row.c2,.form-row.c3,.form-row.c4{grid-template-columns:1fr}
       .tabs{flex-direction:column} .tab{justify-content:flex-start}
       .hero h1{font-size:22px}
@@ -282,6 +337,12 @@
         </svg>
         Trip-Planer
       </button>
+      <button class="tab" role="tab" data-tab="ex">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+        </svg>
+        Entdecken
+      </button>
     </div>
 
     <!-- Einfacher Flug -->
@@ -306,7 +367,7 @@
           <select id="ow-class"><option value="1">Economy</option><option value="2">Premium Economy</option><option value="3">Business</option><option value="4">First Class</option></select>
         </div>
         <div class="field"><label for="ow-stops">Stopps</label>
-          <select id="ow-stops"><option value="">Egal</option><option value="0">Direktflug</option><option value="1">Max. 1 Stopp</option></select>
+          <select id="ow-stops"><option value="0">Egal</option><option value="1">Direktflug</option><option value="2">Max. 1 Stopp</option></select>
         </div>
       </div>
     </div>
@@ -330,7 +391,7 @@
           <select id="rt-class"><option value="1">Economy</option><option value="2">Premium Economy</option><option value="3">Business</option><option value="4">First Class</option></select>
         </div>
         <div class="field"><label for="rt-stops">Stopps</label>
-          <select id="rt-stops"><option value="">Egal</option><option value="0">Direktflug</option><option value="1">Max. 1 Stopp</option></select>
+          <select id="rt-stops"><option value="0">Egal</option><option value="1">Direktflug</option><option value="2">Max. 1 Stopp</option></select>
         </div>
       </div>
     </div>
@@ -361,21 +422,64 @@
       </div>
     </div>
 
+    <!-- Entdecken: günstigste Ziele -->
+    <div id="tab-ex" class="tab-panel" style="display:none">
+      <div class="trip-info">
+        <strong>Entdecken:</strong> Wohin ist es ab deinem Flughafen am günstigsten? Google wählt dafür die billigsten Termine der nächsten Monate.
+      </div>
+      <div class="form-row c3">
+        <div class="field"><label for="ex-from">Abflug</label><div class="ac-wrap"><input type="text" id="ex-from" placeholder="IATA oder Stadt" autocomplete="off"/></div></div>
+        <div class="field"><label for="ex-type">Reiseart</label>
+          <select id="ex-type"><option value="1">Hin &amp; Rück</option><option value="2">Nur Hinflug</option></select>
+        </div>
+        <div class="field"><label for="ex-dur">Reisedauer</label>
+          <select id="ex-dur"><option value="1">Wochenende</option><option value="2" selected>1 Woche</option><option value="3">2 Wochen</option></select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Optionen, die die Suche verbreitern, um billigere Flüge zu finden -->
+    <div class="opts" id="opts">
+      <div class="opts-title">Günstiger finden</div>
+      <div class="form-row c3">
+        <div class="field" data-modes="ow rt"><label for="opt-flex">Flexible Daten</label>
+          <select id="opt-flex"><option value="0">Exakt</option><option value="1">± 1 Tag</option><option value="2">± 2 Tage</option><option value="3">± 3 Tage</option></select>
+        </div>
+        <div class="field" data-modes="ow rt mc"><label for="opt-bags">Handgepäck im Preis</label>
+          <select id="opt-bags"><option value="0">Ohne</option><option value="1">1 Stück</option><option value="2">2 Stück</option></select>
+        </div>
+        <div class="field" data-modes="ow rt mc ex"><label for="opt-max">Max. Preis</label>
+          <input type="number" id="opt-max" min="0" step="10" placeholder="unbegrenzt"/>
+        </div>
+      </div>
+      <div class="chk-row">
+        <label class="chk" data-modes="ow rt mc ex"><input type="checkbox" id="opt-nearby" checked/> Flughäfen im Umkreis <small>(z. B. VIE + BTS)</small></label>
+        <label class="chk" data-modes="rt mc"><input type="checkbox" id="opt-oneways" checked/> Mit Einzeltickets vergleichen</label>
+        <label class="chk" data-modes="ow rt mc"><input type="checkbox" id="opt-countries"/> Verkaufsländer vergleichen</label>
+        <label class="chk" data-modes="ow rt mc"><input type="checkbox" id="opt-deep" checked/> Genaue Preise <small>(langsamer)</small></label>
+      </div>
+    </div>
+
     <button class="search-btn" id="search-btn">Flüge suchen</button>
+    <div class="qcount" id="qcount"></div>
   </div>
 
   <section class="results" id="results" style="display:none">
+    <div id="results-summary"></div>
+    <div id="results-calendar"></div>
+    <div id="results-extra"></div>
     <div class="results-header">
       <h3 id="results-title"></h3>
-      <div class="sort-bar">
+      <div class="sort-bar" id="sort-bar">
         <span class="sort-label">Sortieren:</span>
-        <button class="sort-btn active" data-sort="best">Beste</button>
-        <button class="sort-btn" data-sort="price" data-dir="asc">Preis ↑</button>
-        <button class="sort-btn" data-sort="duration" data-dir="asc">Dauer ↑</button>
-        <button class="sort-btn" data-sort="dep" data-dir="asc">Abflug ↑</button>
-        <button class="sort-btn" data-sort="arr" data-dir="asc">Ankunft ↑</button>
+        <button class="sort-btn" data-sort="best" data-label="Empfohlen">Empfohlen</button>
+        <button class="sort-btn active" data-sort="price" data-label="Preis">Preis ↑</button>
+        <button class="sort-btn" data-sort="duration" data-label="Dauer">Dauer ↑</button>
+        <button class="sort-btn" data-sort="dep" data-label="Abflug">Abflug ↑</button>
+        <button class="sort-btn" data-sort="arr" data-label="Ankunft">Ankunft ↑</button>
       </div>
     </div>
+    <div id="results-step"></div>
     <div id="results-list"></div>
   </section>
 </div>
@@ -393,11 +497,12 @@
       </div>
     </div>
     <div class="field">
-      <label for="serp-key-input">SerpAPI Key (Fallback)</label>
+      <label for="serp-key-input">Eigener SerpAPI-Key (optional)</label>
       <div class="key-row">
         <input type="password" id="serp-key-input" placeholder="API-Key..." autocomplete="off"/>
         <button class="key-toggle" id="key-toggle">Anzeigen</button>
       </div>
+      <p class="muted" style="margin-top:4px">Leer lassen = Key des Servers (Secret <code>SERPAPI_KEY</code>). Ein eigener Key bleibt nur in diesem Browser.</p>
     </div>
     <div class="form-row c2">
       <div class="field"><label for="currency-select">Währung</label>
@@ -413,8 +518,22 @@
         </select>
       </div>
     </div>
+    <div class="field"><label for="gl-select">Verkaufsland (Preise wie in …)</label>
+      <select id="gl-select">
+        <option value="at">Österreich</option><option value="de">Deutschland</option>
+        <option value="ch">Schweiz</option><option value="gb">Großbritannien</option><option value="us">USA</option>
+      </select>
+    </div>
     <button class="save-btn" id="save-btn">Speichern</button>
     <div id="save-status"></div>
+  </div>
+</div>
+
+<!-- Buchungsoptionen -->
+<div class="overlay" id="booking-modal" style="display:none">
+  <div class="modal">
+    <h2>Buchungsoptionen <button class="btn-x" data-close="booking-modal">×</button></h2>
+    <div id="booking-body"></div>
   </div>
 </div>
 
@@ -607,14 +726,18 @@ function searchAirports(query) {
     .slice(0,3);
 }
 
-const DEFAULT_KEY = 'af4a185cedc89384ec952f878f548278c2fd932f3061d855c1772aa9debfe5f6';
 const AUTO_PROXY  = window.location.origin + '/api/flights';
+
+// Früher war ein SerpAPI-Key im Code hinterlegt und wurde beim Speichern der
+// Einstellungen in localStorage übernommen – diesen Altbestand entfernen.
+if((localStorage.getItem('serpapi_key')||'').startsWith('af4a185cedc8')) localStorage.removeItem('serpapi_key');
 
 const st = {
   proxyUrl: localStorage.getItem('proxy_url')          || AUTO_PROXY,
-  serpKey:  localStorage.getItem('serpapi_key')         || DEFAULT_KEY,
+  serpKey:  localStorage.getItem('serpapi_key')         || '',
   currency: localStorage.getItem('currency')            || 'EUR',
   lang:     localStorage.getItem('lang')                || 'de',
+  gl:       localStorage.getItem('gl')                  || 'at',
   user:     JSON.parse(localStorage.getItem('sky_user') || 'null'),
   tab:      'ow',
   segN:     0,
@@ -821,6 +944,7 @@ function syncAirports(from, to) {
     'ow': { from:'ow-from', to:'ow-to' },
     'rt': { from:'rt-from', to:'rt-to' },
     'mc': { from:'mc-origin', to:'mc-dest' },
+    'ex': { from:'ex-from' },
   };
   const src = map[from], dst = map[to];
   if(!src || !dst) return;
@@ -850,7 +974,7 @@ function addSeg(){
     <div class="seg-label">Stopp ${n} ${n>2?'<button class="remove-seg" aria-label="Entfernen">×</button>':''}</div>
     <div class="form-row c2">
       <div class="field"><label>Stadt / Flughafen</label><div class="ac-wrap"><input type="text" id="sf${n}" placeholder="IATA oder Stadt" autocomplete="off"/></div></div>
-      <div class="field"><label>Ankunft frühestens</label><div class="date-input" id="di-sf${n}"><div class="date-display placeholder" tabindex="0">TT.MM.JJJJ <span class="date-cal-icon">📅</span></div></div></div>
+      <div class="field"><label>Weiterflug am</label><div class="date-input" id="di-sf${n}"><div class="date-display placeholder" tabindex="0">TT.MM.JJJJ <span class="date-cal-icon">📅</span></div></div></div>
     </div>`;
   $('seg-container').appendChild(div);
   // Vorschlag: letzter bekannter Stopp + 3 Tage, sonst Startdatum + n*3 Tage
@@ -863,7 +987,7 @@ function addSeg(){
   if(suggestIso === startIso) suggestIso = plus(new Date(startIso), n*3).toISOString().split('T')[0];
   initDatepicker('di-sf'+n, suggestIso, startIso);
   const rm=div.querySelector('.remove-seg');
-  if(rm) rm.addEventListener('click',()=>div.remove());
+  if(rm) rm.addEventListener('click',()=>{ div.remove(); updateOpts(); });
   initAirportAC('sf'+n);
 }
 
@@ -947,7 +1071,7 @@ function closeAC(inputId) {
 function syncPairedField(inputId, value) {
   // Keep matching fields in other tabs in sync
   const pairs = {
-    'ow-from':'rt-from', 'rt-from':'ow-from',
+    'ow-from':'rt-from', 'rt-from':'ow-from', 'ex-from':'ow-from',
     'ow-to':'rt-to',     'rt-to':'ow-to',
   };
   const paired = pairs[inputId];
@@ -959,9 +1083,10 @@ function syncPairedField(inputId, value) {
 ══════════════════════════════════════════════════════════ */
 function openSettings(){
   $('proxy-url-input').value=st.proxyUrl===AUTO_PROXY?'':st.proxyUrl;
-  $('serp-key-input').value=st.serpKey!==DEFAULT_KEY?st.serpKey:'';
+  $('serp-key-input').value=st.serpKey;
   $('currency-select').value=st.currency;
   $('lang-select').value=st.lang;
+  $('gl-select').value=st.gl;
   $('save-status').innerHTML='';
   $('settings-modal').style.display='flex';
 }
@@ -970,11 +1095,13 @@ function saveSettings(){
   if(raw&&!raw.startsWith('http')&&!raw.startsWith('/'))
     { $('save-status').innerHTML='<div class="smsg err">URL muss mit https:// oder / beginnen.</div>'; return; }
   st.proxyUrl=raw||AUTO_PROXY;
-  st.serpKey=$('serp-key-input').value.trim()||DEFAULT_KEY;
+  st.serpKey=$('serp-key-input').value.trim();
   st.currency=$('currency-select').value;
   st.lang=$('lang-select').value;
+  st.gl=$('gl-select').value;
   localStorage.setItem('proxy_url',  st.proxyUrl);
-  localStorage.setItem('serpapi_key',st.serpKey);
+  if(st.serpKey) localStorage.setItem('serpapi_key',st.serpKey); else localStorage.removeItem('serpapi_key');
+  localStorage.setItem('gl',         st.gl);
   localStorage.setItem('currency',   st.currency);
   localStorage.setItem('lang',       st.lang);
   $('save-status').innerHTML='<div class="smsg ok">Gespeichert!</div>';
@@ -984,50 +1111,43 @@ function saveSettings(){
 /* ══════════════════════════════════════════════════════════
    SUCHE
 ══════════════════════════════════════════════════════════ */
+async function api(body){
+  const headers={'Content-Type':'application/json'};
+  if(st.serpKey) headers['X-SerpApi-Key']=st.serpKey;
+  const res=await fetch(st.proxyUrl,{method:'POST',headers,
+    body:JSON.stringify({currency:st.currency,hl:st.lang,gl:st.gl,...body})});
+  let j=null; try{ j=await res.json(); }catch{}
+  if(!res.ok||!j||j.error) throw new Error(j?.error||`HTTP ${res.status}`);
+  return j;
+}
+
 async function doSearch(){
-  const params=buildParams();
-  if(!params) return;
+  const body=buildBody();
+  if(!body) return;
   setSearching(true); hideRes();
-
   try {
-    // _legs ist internes Metadaten-Feld – nicht an API senden
-    const {_legs, ...apiParams} = params;
-    const qs=new URLSearchParams({engine:'google_flights',api_key:st.serpKey,...apiParams}).toString();
-    const res=await fetch(`${st.proxyUrl}?${qs}`);
-    if(!res.ok){ let m=`HTTP ${res.status}`; try{const j=await res.json();m=j.error||m;}catch{} throw new Error(m); }
-    const data=await res.json();
-
-    if(st.tab==='mc') renderTripResults(data, _legs);
-    else              renderResults(data);
+    const data=await api(body);
+    if(body.action==='explore') renderExplore(data, body);
+    else                        renderSearch(data);
   } catch(err){ renderErr(`Fehler: ${err.message}`); }
-
   setSearching(false);
 }
 
-function buildParams(){
-  const base={currency:st.currency,hl:st.lang};
+/* Optionen aus dem Block „Günstiger finden" */
+function savingOpts(){
+  return {
+    nearby:            $('opt-nearby').checked,
+    compare_oneways:   $('opt-oneways').checked,
+    compare_countries: $('opt-countries').checked,
+    deep_search:       $('opt-deep').checked,
+    bags:              $('opt-bags').value,
+    max_price:         $('opt-max').value,
+    flex:              $('opt-flex').value,
+  };
+}
 
-  if(st.tab==='ow'){
-    const f=$('ow-from').value.trim(),t=$('ow-to').value.trim();
-    if(!f||!t){alert('Bitte Abflug und Ziel angeben.');return null;}
-    const d=getDate('di-ow-date');
-    if(!d){alert('Bitte Datum wählen.');return null;}
-    return {...base,type:'2',departure_id:f,arrival_id:t,outbound_date:d,
-      adults:$('ow-pax').value,travel_class:$('ow-class').value,
-      ...($('ow-stops').value!==''&&{stops:$('ow-stops').value})};
-  }
-
-  if(st.tab==='rt'){
-    const f=$('rt-from').value.trim(),t=$('rt-to').value.trim();
-    if(!f||!t){alert('Bitte Abflug und Ziel angeben.');return null;}
-    const dep=getDate('di-rt-dep'),ret=getDate('di-rt-ret');
-    if(!dep||!ret){alert('Bitte beide Daten wählen.');return null;}
-    return {...base,type:'1',departure_id:f,arrival_id:t,outbound_date:dep,return_date:ret,
-      adults:$('rt-pax').value,travel_class:$('rt-class').value,
-      ...($('rt-stops').value!==''&&{stops:$('rt-stops').value})};
-  }
-
-  // Trip-Planer: SerpAPI type=3 erfordert multi_city_json
+/* Leg-Sequenz Trip-Planer: Heimat → Stopp1 → … → Heimat/Ziel */
+function mcLegs(){
   const origin=$('mc-origin').value.trim();
   const dest  =($('mc-dest').value.trim()||origin);
   const start =getDate('di-mc-start');
@@ -1043,42 +1163,92 @@ function buildParams(){
   });
   if(!stops.length){alert('Bitte mindestens einen Zwischenstopp angeben.');return null;}
 
-  // Leg-Sequenz: Heimat → Stopp1 → … → Heimat/Ziel
-  const legs=[{f:origin, t:stops[0].city, d:start}];
+  const legs=[{from:origin, to:stops[0].city, date:start}];
   for(let i=0;i<stops.length-1;i++)
-    legs.push({f:stops[i].city, t:stops[i+1].city, d:stops[i].date||start});
-  legs.push({f:stops[stops.length-1].city, t:dest, d:stops[stops.length-1].date||end});
+    legs.push({from:stops[i].city, to:stops[i+1].city, date:stops[i].date||start});
+  legs.push({from:stops[stops.length-1].city, to:dest, date:stops[stops.length-1].date||end});
+  return legs;
+}
 
-  // SerpAPI multi_city_json: JSON-Array [{departure_id, arrival_id, date}, ...]
-  const multiCityJson=JSON.stringify(legs.map(l=>({
-    departure_id: l.f,
-    arrival_id:   l.t,
-    date:         l.d,
-  })));
+function buildBody(){
+  const o=savingOpts();
 
-  return {...base,
-    type:'3',
-    multi_city_json: multiCityJson,
-    adults:$('mc-pax').value,
-    travel_class:$('mc-class').value,
-    _legs:legs,
-  };
+  if(st.tab==='ow'){
+    const from=$('ow-from').value.trim(), to=$('ow-to').value.trim();
+    if(!from||!to){alert('Bitte Abflug und Ziel angeben.');return null;}
+    const date=getDate('di-ow-date');
+    if(!date){alert('Bitte Datum wählen.');return null;}
+    return {action:'search', mode:'ow', ...o, compare_oneways:false, from, to, date,
+      adults:$('ow-pax').value, travel_class:$('ow-class').value, stops:$('ow-stops').value};
+  }
+
+  if(st.tab==='rt'){
+    const from=$('rt-from').value.trim(), to=$('rt-to').value.trim();
+    if(!from||!to){alert('Bitte Abflug und Ziel angeben.');return null;}
+    const date=getDate('di-rt-dep'), ret=getDate('di-rt-ret');
+    if(!date||!ret){alert('Bitte beide Daten wählen.');return null;}
+    return {action:'search', mode:'rt', ...o, flex:String(Math.min(+o.flex,2)), from, to, date, return_date:ret,
+      adults:$('rt-pax').value, travel_class:$('rt-class').value, stops:$('rt-stops').value};
+  }
+
+  if(st.tab==='ex'){
+    const from=$('ex-from').value.trim();
+    if(!from){alert('Bitte Abflughafen angeben.');return null;}
+    return {action:'explore', from, nearby:o.nearby, max_price:o.max_price,
+      type:$('ex-type').value, travel_duration:$('ex-dur').value};
+  }
+
+  const legs=mcLegs();
+  if(!legs) return null;
+  return {action:'search', mode:'mc', ...o, flex:'0', legs,
+    adults:$('mc-pax').value, travel_class:$('mc-class').value};
+}
+
+/* Wie viele SerpAPI-Abfragen kostet die Suche (Obergrenze)? */
+function estimateQueries(){
+  const o=savingOpts(), c=o.compare_countries?4:0;
+  if(st.tab==='ex') return 1;
+  if(st.tab==='ow') return 2*Math.min(+o.flex,3)+1+c;
+  if(st.tab==='rt'){ const n=2*Math.min(+o.flex,2)+1; return n*n+(o.compare_oneways?2*n:0)+c; }
+  const legs=document.querySelectorAll('.multi-seg').length+1;
+  return 1+(o.compare_oneways?legs:0)+c;
+}
+
+function updateOpts(){
+  document.querySelectorAll('#opts [data-modes]').forEach(el=>{
+    el.style.display=el.dataset.modes.split(' ').includes(st.tab)?'':'none';
+  });
+  // Hin & Rück: ±3 Tage wären 49 Datumspaare – auf ±2 begrenzen
+  const opt3=$('opt-flex').querySelector('option[value="3"]');
+  opt3.disabled=st.tab==='rt';
+  if(st.tab==='rt'&&$('opt-flex').value==='3') $('opt-flex').value='2';
+  const n=estimateQueries();
+  $('qcount').textContent=`≈ ${n} SerpAPI-Abfrage${n===1?'':'n'} pro Suche · gleiche Suchen kommen 2 h lang aus dem Cache`;
+  $('search-btn').textContent=st.tab==='ex'?'Ziele entdecken':'Flüge suchen';
 }
 
 /* ══════════════════════════════════════════════════════════
    SORTIERUNG & RENDERN
 ══════════════════════════════════════════════════════════ */
-let allFlights=[], currentSort='best', currentDir='asc';
+const S={data:null, sel:0, views:[], sorted:[], sort:'price', dir:'asc', booking:[], explore:null};
 
-function timeToMin(t){if(!t)return 9999;const[h,m]=t.split(':').map(Number);return h*60+(m||0);}
+const fmt=p=>typeof p==='number'
+  ? new Intl.NumberFormat('de-DE',{style:'currency',currency:st.currency,maximumFractionDigits:0}).format(p)
+  : '–';
+const DOW=['So','Mo','Di','Mi','Do','Fr','Sa'];
+const dayLabel=iso=>{ if(!iso) return ''; const d=new Date(iso+'T00:00:00Z'); return `${DOW[d.getUTCDay()]} ${iso.slice(8,10)}.${iso.slice(5,7)}.`; };
+const PRICE_LEVEL={low:'niedrig', typical:'typisch', high:'hoch'};
+
+// SerpAPI liefert "2026-11-01 07:30" – nur die Uhrzeit vergleichen
+function timeToMin(t){if(!t)return 9999;const[h,m]=String(t).split(' ').pop().split(':').map(Number);return h*60+(m||0);}
 function sortFlights(fl,by,dir){
   const f=[...fl];
   const asc = dir!=='desc';
   const cmp = (a,b) => asc ? a-b : b-a;
-  if(by==='price')    return f.sort((a,b)=>cmp(a.price||9999, b.price||9999));
+  if(by==='price')    return f.sort((a,b)=>cmp(a.price??1e9, b.price??1e9));
   if(by==='duration') return f.sort((a,b)=>cmp(a.total_duration||9999, b.total_duration||9999));
   if(by==='dep')      return f.sort((a,b)=>cmp(timeToMin(a.flights?.[0]?.departure_airport?.time), timeToMin(b.flights?.[0]?.departure_airport?.time)));
-  if(by==='arr')      return f.sort((a,b)=>cmp(timeToMin(a.flights?.[0]?.arrival_airport?.time), timeToMin(b.flights?.[0]?.arrival_airport?.time)));
+  if(by==='arr')      return f.sort((a,b)=>cmp(timeToMin(a.flights?.at(-1)?.arrival_airport?.time), timeToMin(b.flights?.at(-1)?.arrival_airport?.time)));
   return f;
 }
 
@@ -1207,205 +1377,317 @@ function legHtml(f, labelClass, labelText){
   </div>`;
 }
 
-/* Buchungs-Link aus booking_token */
-function bookUrl(f){
-  if(f.booking_token) return `https://www.google.com/flights?hl=de#flt=${encodeURIComponent(f.booking_token)}`;
-  // Fallback: Google Flights Deeplink aus Departure/Arrival
-  const leg=f.flights?.[0]||{};
-  const dep=leg.departure_airport?.id||'';
-  const arr=leg.arrival_airport?.id||'';
-  const date=leg.departure_airport?.time?.split('T')[0]||'';
-  return `https://www.google.com/flights?hl=de#flt=${dep}.${arr}.${date}`;
+/* Google-Flights-Link als Fallback (öffnet dieselbe Suche bei Google) */
+function gfUrl(q){
+  if(!q) return 'https://www.google.com/travel/flights';
+  let dep=q.departure_id, arr=q.arrival_id, date=q.outbound_date, ret=q.return_date;
+  if(q.multi_city_json){ try{ const l=JSON.parse(q.multi_city_json)[0]; dep=l.departure_id; arr=l.arrival_id; date=l.date; }catch{} }
+  const first=v=>String(v||'').split(',')[0];
+  const text=`Flights from ${first(dep)} to ${first(arr)} on ${date}${ret?` through ${ret}`:''}${q.type==='2'?' one way':''}`;
+  return `https://www.google.com/travel/flights?q=${encodeURIComponent(text)}&curr=${encodeURIComponent(q.currency||st.currency)}&hl=${encodeURIComponent(q.hl||st.lang)}&gl=${encodeURIComponent(q.gl||st.gl)}`;
 }
 
-function flightCard(f, returnFlight){
-  const hasReturn=!!returnFlight;
-  const totalPrice=hasReturn
-    ? (f.price||0)+(returnFlight.price||0)
-    : f.price||0;
+/* ── Suchergebnis ─────────────────────────────────────────── */
+const mainResults=()=>S.data.results.filter(r=>r.kind==='main');
+const sepKey=r=>`${r.date}|${r.returnDate}`;
+const isRequested=r=>{ const q=S.data.requested; return r.date===q.date&&(S.data.mode!=='rt'||r.returnDate===q.returnDate); };
 
-  return `<div class="fcard">
-    <div class="fcard-legs">
-      ${legHtml(f, 'outbound', hasReturn?'Hinflug':'')}
-      ${hasReturn ? legHtml(returnFlight,'ret','Rückflug') : ''}
-    </div>
+// Bester Preis für ein Datum – inkl. Variante „zwei Einzeltickets"
+function bestPrice(r){
+  const sep=S.data.separate?.[sepKey(r)];
+  const v=[r.cheapest, sep?.price].filter(x=>typeof x==='number');
+  return v.length?Math.min(...v):null;
+}
+function rangeLabel(r){
+  if(S.data.mode==='rt') return `${dayLabel(r.date)} – ${dayLabel(r.returnDate)}`;
+  if(S.data.mode==='mc') return 'gesamter Trip';
+  return dayLabel(r.date);
+}
+const totalLegs=()=>S.data.mode==='rt'?2:S.data.mode==='mc'?S.data.requested.legs.length:1;
+const legLabel=i=>S.data.mode==='rt'?(i?'Rückflug':'Hinflug'):S.data.mode==='mc'?`Strecke ${i+1}`:'';
+
+function renderSearch(data){
+  S.data=data; S.explore=null;
+  $('sort-bar').style.display='';
+  // Vorauswahl: günstigstes Datum (inkl. Einzeltickets)
+  let best=-1, bp=Infinity;
+  data.results.forEach((r,i)=>{ if(r.kind!=='main') return; const p=bestPrice(r); if(p!=null&&p<bp){bp=p;best=i;} });
+  if(best<0) best=data.results.findIndex(r=>r.kind==='main');
+  selectResult(best);
+}
+
+function selectResult(i){
+  S.sel=i;
+  const r=S.data.results[i];
+  S.views=[{flights:r.flights, query:r.query, chosen:[]}];
+  $('results').style.display='block';
+  renderSummary(); renderCalendar(); renderExtra(); renderList();
+}
+
+function renderSummary(){
+  const d=S.data, r=d.results[S.sel];
+  let low={price:Infinity,label:''};
+  const consider=(p,label)=>{ if(typeof p==='number'&&p<low.price) low={price:p,label}; };
+  for(const x of d.results){
+    consider(x.cheapest, x.kind==='country'?`${rangeLabel(x)}, Verkaufsland ${x.gl.toUpperCase()}`:rangeLabel(x));
+    const sep=x.kind==='main'&&d.separate?.[sepKey(x)];
+    if(sep) consider(sep.price, `${rangeLabel(x)} als 2 Einzeltickets`);
+  }
+  if(d.legsSeparate) consider(d.legsSeparate.price,'alle Strecken als Einzeltickets');
+
+  const req=d.results.find(x=>x.kind==='main'&&isRequested(x));
+  const reqPrice=req?bestPrice(req):null;
+  const lines=[];
+  if(low.price<Infinity){
+    let l=`Günstigster gefundener Preis: <strong>${fmt(low.price)}</strong> – ${esc(low.label)}`;
+    if(reqPrice!=null&&low.price<reqPrice) l+=` <span class="muted">(${fmt(reqPrice-low.price)} unter deinem Wunschtermin)</span>`;
+    lines.push(l);
+  }
+  const pi=r.price_insights;
+  if(pi?.price_level){
+    const range=Array.isArray(pi.typical_price_range)?` · üblich ${fmt(pi.typical_price_range[0])}–${fmt(pi.typical_price_range[1])}`:'';
+    lines.push(`<span>Preisniveau laut Google für die Auswahl: <span class="pill ${esc(pi.price_level)}">${esc(PRICE_LEVEL[pi.price_level]||pi.price_level)}</span><span class="muted">${range}</span></span>`);
+  }
+  const stats=d.stats||{};
+  let meta=`${stats.queries||0} Abfragen · ${stats.cached||0} aus Cache`;
+  if(d.errors?.length) meta+=` · ${d.errors.length} fehlgeschlagen`;
+  lines.push(`<span class="muted">${meta}</span>`);
+  $('results-summary').innerHTML=`<div class="summary">${lines.map(l=>`<div>${l}</div>`).join('')}</div>`;
+}
+
+function renderCalendar(){
+  const d=S.data, el=$('results-calendar'), mains=mainResults();
+  if(mains.length<2){ el.innerHTML=''; return; }
+  const min=Math.min(...mains.map(bestPrice).filter(p=>p!=null));
+  const cell=r=>{
+    if(!r) return '<td></td>';
+    const i=d.results.indexOf(r), p=bestPrice(r);
+    const sep=d.separate?.[sepKey(r)];
+    const viaSep=sep&&sep.price<(r.cheapest??Infinity);
+    const cls=[p===min?'cheap':'', i===S.sel?'sel':'', isRequested(r)?'req':''].join(' ');
+    return `<td><button class="${cls}" data-res="${i}" ${p==null?'disabled':''}>${p==null?'–':fmt(p)}${viaSep?'<span class="sep">2 Einzeltickets</span>':''}</button></td>`;
+  };
+  let table;
+  if(d.mode==='ow'){
+    table=`<tr>${mains.map(r=>`<th>${dayLabel(r.date)}</th>`).join('')}</tr><tr>${mains.map(cell).join('')}</tr>`;
+  } else {
+    const outs=[...new Set(mains.map(r=>r.date))].sort();
+    const rets=[...new Set(mains.map(r=>r.returnDate))].sort();
+    table=`<tr><th>Hin ↓ / Rück →</th>${rets.map(x=>`<th>${dayLabel(x)}</th>`).join('')}</tr>`
+      + outs.map(o=>`<tr><th>${dayLabel(o)}</th>${rets.map(x=>cell(mains.find(r=>r.date===o&&r.returnDate===x))).join('')}</tr>`).join('');
+  }
+  el.innerHTML=`<div class="cal"><div class="muted">Preise je Reisedatum – grün = am günstigsten, unterstrichen = dein Wunschtermin. Klicken zum Anzeigen.</div><table>${table}</table></div>`;
+}
+
+function renderExtra(){
+  const d=S.data, r=d.results[S.sel];
+  let html='';
+
+  // Verkaufsland-Vergleich
+  const countries=d.results.filter(x=>x.kind==='country');
+  if(countries.length){
+    const c0=countries[0];
+    const base=mainResults().find(x=>x.date===c0.date&&x.returnDate===c0.returnDate);
+    const all=[base,...countries].filter(Boolean);
+    const min=Math.min(...all.map(x=>x.cheapest??Infinity));
+    html+=`<div class="chips"><span class="muted">Verkaufsland (${esc(rangeLabel(c0))}):</span>${all.map(x=>{
+      const i=d.results.indexOf(x);
+      return `<button class="chip ${i===S.sel?'sel':''} ${x.cheapest===min?'cheap':''}" data-res="${i}">${esc(x.gl.toUpperCase())} ${fmt(x.cheapest)}</button>`;
+    }).join('')}</div>`;
+  }
+
+  // Einzeltickets
+  if(d.mode==='rt'&&r.kind==='main'){
+    const sep=d.separate?.[sepKey(r)];
+    if(sep) html+=separateCard([{...sep.outbound,label:'Hinflug',key:'outbound',cls:'outbound'},
+                                {...sep.inbound, label:'Rückflug',key:'inbound', cls:'ret'}], sep.price, r.cheapest);
+  }
+  if(d.mode==='mc'&&d.legsSeparate){
+    html+=separateCard(d.legsSeparate.legs.map((l,i)=>({...l,label:`Strecke ${i+1}`,key:'leg'+i,cls:'outbound'})),
+      d.legsSeparate.price, mainResults()[0]?.cheapest);
+  }
+  $('results-extra').innerHTML=html;
+}
+
+function separateCard(legs, total, ticketPrice){
+  S.sepLegs=legs;
+  const diff=typeof ticketPrice==='number'?ticketPrice-total:null;
+  if(diff!=null&&diff<=0){
+    return `<p class="muted" style="margin-bottom:12px">Einzeltickets geprüft: ${fmt(-diff)} teurer als ein gemeinsames Ticket.</p>`;
+  }
+  const head=diff!=null
+    ? `💡 Als ${legs.length} Einzeltickets ${fmt(diff)} günstiger als ein gemeinsames Ticket`
+    : `Als ${legs.length} Einzeltickets`;
+  return `<div class="fcard deal">
+    <div class="deal-bar">${head}</div>
+    <div class="fcard-legs">${legs.map(l=>legHtml(l.flight, l.cls, `${esc(l.label)} · ${fmt(l.flight.price)}`)).join('')}</div>
     <div class="fcard-footer">
-      <div class="fprice">
-        ${totalPrice?`<span class="amt">${totalPrice} ${esc(st.currency)}</span><span class="pp">pro Person${hasReturn?' (ges.)':''}</span>`:'<span class="amt">Preis anfragen</span>'}
-      </div>
-      <a class="btn-book" href="${esc(bookUrl(f))}" target="_blank" rel="noopener">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
-          <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-        </svg>
-        Buchen
-      </a>
+      <div class="fprice"><span class="amt">${fmt(total)}</span><span class="pp">Summe</span></div>
+      <div class="fcard-actions">${legs.map(l=>`<button class="btn-sec" data-act="book-sep" data-key="${l.key}">${esc(l.label)} buchen</button>`).join('')}</div>
     </div>
   </div>`;
 }
 
 function renderList(){
-  const sorted=sortFlights(allFlights, currentSort, currentDir);
-  // Index-Mapping erhalten: nach Sort stimmt der Index nicht mehr mit allReturnFlights überein
-  // Daher paaren wir beim ersten Laden und sortieren paarweise
-  const pairs = allFlights.map((f,i)=>({f, ret:allReturnFlights[i]||null}));
-  const sortedPairs = sortFlightPairs(pairs, currentSort, currentDir);
-  $('results-list').innerHTML=sortedPairs.slice(0,15).map(p=>flightCard(p.f, p.ret)).join('');
+  const v=S.views[S.views.length-1], step=S.views.length-1, n=totalLegs();
+  const r=S.data.results[S.sel];
+  S.sorted=sortFlights(v.flights, S.sort, S.dir);
+
+  $('results-title').textContent = n>1
+    ? `${legLabel(step)} wählen (${step+1}/${n}) · ${v.flights.length} Optionen`
+    : `${v.flights.length} Flüge · ${rangeLabel(r)}${r.kind==='country'?` · Verkaufsland ${r.gl.toUpperCase()}`:''}`;
+
+  $('results-step').innerHTML = v.chosen.length
+    ? `<div class="step-bar"><span class="muted">Bereits gewählt – der Preis unten ist der Gesamtpreis:</span><button class="btn-sec" data-act="back">← Zurück</button></div>
+       <div class="chosen">${v.chosen.map((f,i)=>`<div class="fcard">${legHtml(f, i&&S.data.mode==='rt'?'ret':'outbound', legLabel(i))}</div>`).join('')}</div>`
+    : '';
+
+  $('results-list').innerHTML = S.sorted.length
+    ? S.sorted.slice(0,25).map((f,i)=>flightCard(f,i,step,n)).join('')
+    : '<div class="no-res">Keine Ergebnisse. Bitte IATA-Codes, Daten oder Filter prüfen.</div>';
 }
 
-function sortFlightPairs(pairs, by, dir){
-  const p=[...pairs];
-  const asc=dir!=='desc';
-  const cmp=(a,b)=>asc?a-b:b-a;
-  if(by==='price')    return p.sort((a,b)=>cmp(a.f.price||9999, b.f.price||9999));
-  if(by==='duration') return p.sort((a,b)=>cmp(a.f.total_duration||9999, b.f.total_duration||9999));
-  if(by==='dep')      return p.sort((a,b)=>cmp(timeToMin(a.f.flights?.[0]?.departure_airport?.time), timeToMin(b.f.flights?.[0]?.departure_airport?.time)));
-  if(by==='arr')      return p.sort((a,b)=>cmp(timeToMin(a.f.flights?.[0]?.arrival_airport?.time), timeToMin(b.f.flights?.[0]?.arrival_airport?.time)));
-  return p;
-}
-
-let allReturnFlights=[];
-
-function renderResults(data){
-  if(data.error){renderErr(data.error);return;}
-  allFlights=[...(data.best_flights||[]),...(data.other_flights||[])];
-
-  // Hin-/Rückflug: SerpAPI kann return_flights entweder top-level ODER
-  // als .return_flights[] innerhalb jedes best_flights-Eintrags liefern.
-  if(st.tab==='rt'){
-    const topLevel = data.return_flights||[];
-    allReturnFlights = [
-      ...(data.best_flights||[]).map((f,i)=> f.return_flights?.[0] || topLevel[i] || null),
-      ...(data.other_flights||[]).map((f,i)=> f.return_flights?.[0] || topLevel[(data.best_flights||[]).length+i] || null),
-    ];
-  } else {
-    allReturnFlights=[];
-  }
-
-  $('results-title').textContent=allFlights.length?`${allFlights.length} Flüge gefunden`:'Keine Flüge gefunden';
-  $('results').style.display='block';
-  if(!allFlights.length){
-    $('results-list').innerHTML='<div class="no-res">Keine Ergebnisse. Bitte IATA-Codes prüfen (BER, MUC, LHR, CDG, JFK…).</div>';
-    return;
-  }
-  currentSort='best';
-  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.toggle('active',b.dataset.sort==='best'));
-  renderList();
-}
-
-/* ── Trip-Planer Ergebnisse ───────────────────────────────── */
-function renderTripResults(data, legs){
-  if(data.error){renderErr(data.error);return;}
-  const combos=[...(data.best_flights||[]),...(data.other_flights||[])];
-  $('results').style.display='block';
-
-  if(!combos.length){
-    $('results-title').textContent='Keine Trip-Kombinationen gefunden';
-    $('results-list').innerHTML='<div class="no-res">Keine Ergebnisse. Bitte Strecken und Daten prüfen.</div>';
-    return;
-  }
-
-  $('results-title').textContent=`${combos.length} Trip-Kombinationen gefunden`;
-
-  // SerpAPI Multi-City: jedes combo enthält alle Flug-Segmente in combo.flights[].
-  // Wir gruppieren sie in logische Legs anhand der übergebenen Leg-Definitionen.
-  $('results-list').innerHTML=combos.slice(0,10).map(combo=>{
-    const totalDur = combo.total_duration
-      ? `${Math.floor(combo.total_duration/60)}h ${combo.total_duration%60}min` : '';
-    const route = (legs||[]).map(l=>l.f).concat([legs?.[legs.length-1]?.t])
-      .filter(Boolean).join(' → ');
-
-    // Baue ein synthetisches "flight-object" pro Leg, damit legHtml() direkt nutzbar ist.
-    // SerpAPI liefert alle physischen Segmente flach in combo.flights[].
-    // Wir rekonstruieren die Legs anhand der _legs-Definitionen (Abflug→Ziel pro Schritt).
-    const rawSegs   = combo.flights  || [];
-    const rawLays   = combo.layovers || [];
-    const legDefs   = legs || [];
-
-    // Segmente den Legs zuordnen: ein Segment gehört zu Leg i wenn
-    // dep.id === legDefs[i].f  (Startflughafen des Legs)
-    let remaining = [...rawSegs];
-    let layRemaining = [...rawLays];
-
-    const legObjects = legDefs.map((ld, li) => {
-      const legSegs = [];
-      const legLays = [];
-      // Nimm alle Segmente bis wir den Zielflughafen erreichen
-      while(remaining.length) {
-        const seg = remaining[0];
-        legSegs.push(remaining.shift());
-        // Umstieg-Info mitnehmen wenn vorhanden
-        if(layRemaining.length && remaining.length) {
-          const lay = layRemaining[0];
-          // Layover gehört zum aktuellen Leg wenn wir noch nicht am Ziel sind
-          const nextSegDep = remaining[0]?.departure_airport?.id;
-          if(nextSegDep !== ld.t) {
-            legLays.push(layRemaining.shift());
-          } else {
-            layRemaining.shift(); // Layover zwischen Legs – überspringen
-          }
-        }
-        // Sind wir am Ziel dieses Legs angelangt?
-        const lastArr = legSegs[legSegs.length-1]?.arrival_airport?.id;
-        if(lastArr === ld.t) break;
-      }
-
-      // Gesamtdauer des Legs berechnen
-      const legTotalMin = legSegs.reduce((s,seg)=>s+(seg.duration||0),0)
-        + legLays.reduce((s,l)=>s+(l.duration||0),0);
-
-      // Synthetisches Objekt im Format das legHtml() erwartet
-      return {
-        flights:        legSegs,
-        layovers:       legLays,
-        total_duration: legTotalMin || null,
-        booking_token:  combo.booking_token || null,
-        price:          null, // Preis nur auf Combo-Ebene
-      };
-    });
-
-    // Fallback: wenn Leg-Zuordnung nicht klappt (z.B. keine _legs), zeige alle Segmente als ein Leg
-    const displayLegs = legObjects.some(l=>l.flights.length>0)
-      ? legObjects
-      : [{ flights: rawSegs, layovers: rawLays, total_duration: combo.total_duration, booking_token: combo.booking_token, price: null }];
-
-    const legLabels = ['1. Flug','2. Flug','3. Flug','4. Flug','5. Flug'];
-    const legsHtml = displayLegs
-      .filter(l => l.flights.length > 0)
-      .map((l, i) => legHtml(l, 'outbound', legLabels[i] || `Flug ${i+1}`))
-      .join('');
-
-    return `<div class="fcard">
-      <div class="fcard-legs">
-        <div class="trip-route-bar">
-          <span class="trip-route-text">${esc(route)}</span>
-          ${totalDur ? `<span class="trip-route-dur"><em>${esc(totalDur)} gesamt</em></span>` : ''}
-        </div>
-        ${legsHtml}
+function flightCard(f, i, step, n){
+  const more=step<n-1&&f.departure_token;
+  const note=S.data.mode==='rt'?'Hin & Rück':S.data.mode==='mc'?'gesamter Trip':'';
+  const action = more
+    ? `<button class="btn-book" data-act="next" data-i="${i}">${S.data.mode==='rt'?'Rückflug wählen':'Nächste Strecke'} →</button>`
+    : f.booking_token
+      ? `<button class="btn-book" data-act="book" data-i="${i}">Buchungsoptionen</button>`
+      : '';
+  return `<div class="fcard">
+    <div class="fcard-legs">${legHtml(f, step&&S.data.mode==='rt'?'ret':'outbound', n>1?legLabel(step):'')}</div>
+    <div class="fcard-footer">
+      <div class="fprice">
+        ${f.price!=null?`<span class="amt">${fmt(f.price)}</span>`:'<span class="amt">Preis anfragen</span>'}
+        <span class="pp">${note}</span>${f._best?'<span class="best-tag">Empfohlen</span>':''}
       </div>
-      <div class="fcard-footer">
-        <div class="fprice">
-          ${combo.price
-            ? `<span class="amt">${combo.price} ${esc(st.currency)}</span><span class="pp">gesamt pro Person</span>`
-            : '<span class="amt">Preis anfragen</span>'}
-        </div>
-        <a class="btn-book" href="${esc(bookUrl(combo))}" target="_blank" rel="noopener">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
-            <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-          </svg>
-          Buchen
-        </a>
+      <div class="fcard-actions">
+        <a class="btn-sec" href="${esc(gfUrl(S.views[step].query))}" target="_blank" rel="noopener">Google Flights ↗</a>
+        ${action}
       </div>
-    </div>`;
-  }).join('');
+    </div>
+  </div>`;
 }
 
-function renderErr(msg){$('results').style.display='block';$('results-list').innerHTML=`<div class="no-res err">${esc(msg)}</div>`;}
+/* Hin- → Rückflug bzw. nächste Strecke per departure_token */
+async function chooseNext(i){
+  const v=S.views[S.views.length-1], f=S.sorted[i];
+  $('results-list').innerHTML='<div class="no-res">Lade Optionen …</div>';
+  try{
+    const res=await api({action:'next', query:v.query, departure_token:f.departure_token});
+    S.views.push({flights:res.flights, query:res.query, chosen:[...v.chosen, f]});
+    renderList();
+    $('results-title').scrollIntoView({behavior:'smooth', block:'start'});
+  }catch(e){ renderList(); alert('Fehler: '+e.message); }
+}
+
+/* ── Buchungsoptionen ─────────────────────────────────────── */
+async function showBooking(query, token){
+  $('booking-body').innerHTML='<div class="no-res">Lade Buchungsoptionen …</div>';
+  $('booking-modal').style.display='flex';
+  const gf=`<a class="btn-sec" href="${esc(gfUrl(query))}" target="_blank" rel="noopener">In Google Flights öffnen ↗</a>`;
+  if(!token){ $('booking-body').innerHTML=`<p class="muted" style="margin-bottom:10px">Für diesen Flug liefert die API keine Buchungsdaten.</p>${gf}`; return; }
+  try{
+    const res=await api({action:'booking', query, booking_token:token});
+    S.booking=[];
+    const rows=(res.booking_options||[]).map(o=>{
+      const parts=o.separate_tickets?[['Hinflug',o.departing],['Rückflug',o.returning]]:[['',o.together]];
+      return parts.filter(([,p])=>p).map(([label,p])=>{
+        const k=S.booking.push(p.booking_request||null)-1;
+        const btn=p.booking_request?.url
+          ? `<button class="btn-book" data-bo="${k}">Buchen</button>`
+          : p.booking_phone?`<span class="muted">${esc(p.booking_phone)}</span>`:'';
+        return `<div class="bopt">
+          <div><div class="bopt-name">${label?esc(label)+': ':''}${esc(p.book_with||'Anbieter')}${p.airline?' <span class="muted">(Airline direkt)</span>':''}</div>
+          <div class="bopt-sub">${esc((p.baggage_prices||[]).join(' · '))}</div></div>
+          <div class="bopt-right"><span class="fprice"><span class="amt">${fmt(p.price)}</span></span>${btn}</div>
+        </div>`;
+      }).join('');
+    }).join('');
+    $('booking-body').innerHTML=(rows||'<p class="muted" style="margin-bottom:10px">Keine Buchungsoptionen gefunden.</p>')
+      +`<div style="margin-top:10px">${gf}</div>`;
+  }catch(e){
+    $('booking-body').innerHTML=`<div class="no-res err">${esc(e.message)}</div>${gf}`;
+  }
+}
+
+/* Google erwartet für die Weiterleitung zum Anbieter einen POST mit post_data */
+function openBookingRequest(req){
+  if(!req?.url) return;
+  if(!req.post_data){ window.open(req.url,'_blank','noopener'); return; }
+  const form=document.createElement('form');
+  form.method='POST'; form.action=req.url; form.target='_blank';
+  for(const [k,v] of new URLSearchParams(req.post_data)){
+    const inp=document.createElement('input');
+    inp.type='hidden'; inp.name=k; inp.value=v;
+    form.appendChild(inp);
+  }
+  document.body.appendChild(form); form.submit(); form.remove();
+}
+
+/* ── Entdecken ────────────────────────────────────────────── */
+function renderExplore(data, body){
+  S.data=null;
+  S.explore={list:data.destinations||[], query:data.query, from:body.from.toUpperCase().split(',')[0].trim()};
+  $('results').style.display='block';
+  ['results-summary','results-calendar','results-extra','results-step'].forEach(id=>$(id).innerHTML='');
+  $('sort-bar').style.display='none';
+  const list=S.explore.list;
+  $('results-title').textContent=list.length?`${list.length} Ziele ab ${S.explore.from} – günstigste zuerst`:'Keine Ziele gefunden';
+  $('results-list').innerHTML=list.length?`<div class="dest-grid">${list.map((d,i)=>{
+    const stops=d.number_of_stops===0?'Direktflug':d.number_of_stops!=null?`${d.number_of_stops} Stopp${d.number_of_stops>1?'s':''}`:'';
+    const dates=d.end_date?`${dayLabel(d.start_date)} – ${dayLabel(d.end_date)}`:dayLabel(d.start_date);
+    return `<div class="dest">
+      ${d.thumbnail?`<img src="${esc(d.thumbnail)}" alt="" loading="lazy"/>`:''}
+      <div class="dest-body">
+        <div class="dest-name">${esc(d.name)}</div>
+        <div class="dest-meta">${esc(d.country||'')} · ${esc(d.destination_airport.code)}</div>
+        <div class="dest-meta">${esc(dates)}</div>
+        <div class="dest-meta">${esc([d.airline,stops].filter(Boolean).join(' · '))}</div>
+        <div class="dest-price">${fmt(d.flight_price)}</div>
+        <button class="btn-book" data-act="explore-go" data-i="${i}">Flüge ansehen</button>
+      </div>
+    </div>`;}).join('')}</div>`
+    :'<div class="no-res">Keine Ziele gefunden. Anderen Flughafen oder Zeitraum probieren.</div>';
+}
+
+function exploreGo(i){
+  const d=S.explore.list[i];
+  const rt=S.explore.query?.type!=='2'&&d.end_date;
+  const tab=rt?'rt':'ow';
+  switchTab(tab);
+  $(tab+'-from').value=S.explore.from;
+  $(tab+'-to').value=d.destination_airport.code;
+  if(rt){ selectDate('di-rt-dep',d.start_date); selectDate('di-rt-ret',d.end_date); }
+  else  { selectDate('di-ow-date',d.start_date); }
+  window.scrollTo({top:0,behavior:'smooth'});
+  doSearch();
+}
+
+function renderErr(msg){
+  $('results').style.display='block';
+  ['results-summary','results-calendar','results-extra','results-step'].forEach(id=>$(id).innerHTML='');
+  $('results-title').textContent='';
+  $('sort-bar').style.display='none';
+  $('results-list').innerHTML=`<div class="no-res err">${esc(msg)}</div>`;
+}
 function hideRes(){$('results').style.display='none';}
 function setSearching(on){
   $('search-btn').disabled=on;
-  $('search-btn').innerHTML=on?'Suche läuft <span class="dots"><span></span><span></span><span></span></span>':'Flüge suchen';
+  if(on) $('search-btn').innerHTML='Suche läuft <span class="dots"><span></span><span></span><span></span></span>';
+  else   updateOpts();
+}
+
+function switchTab(tab){
+  const prev=st.tab;
+  st.tab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
+  $('tab-'+tab).style.display='block';
+  syncAirports(prev, tab);
+  updateOpts();
+  hideRes();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1421,26 +1703,17 @@ document.addEventListener('DOMContentLoaded', () => {
   initDatepicker('di-mc-end',  plus14,   todayIso);
 
   // Tabs – beim Wechsel Flughäfen synchron halten
-  document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
-    const prev = st.tab;
-    st.tab = b.dataset.tab;
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    b.classList.add('active');
-    document.querySelectorAll('.tab-panel').forEach(p=>p.style.display='none');
-    $('tab-'+st.tab).style.display='block';
-    syncAirports(prev, st.tab);
-    hideRes();
-  }));
+  document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
 
   document.querySelectorAll('.swap-btn[data-swap]').forEach(bindSwap);
 
   // Autocomplete für alle Airport-Inputs aktivieren
-  const AIRPORT_INPUT_IDS = ['ow-from','ow-to','rt-from','rt-to','mc-origin','mc-dest'];
+  const AIRPORT_INPUT_IDS = ['ow-from','ow-to','rt-from','rt-to','mc-origin','mc-dest','ex-from'];
   AIRPORT_INPUT_IDS.forEach(initAirportAC);
 
   // Trip-planer: init 2 stops
   addSeg(); addSeg();
-  $('add-seg-btn').addEventListener('click', addSeg);
+  $('add-seg-btn').addEventListener('click', ()=>{ addSeg(); updateOpts(); });
 
   // Modals
   document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.style.display='none';}));
@@ -1458,33 +1731,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.sort-btn').forEach(b=>b.addEventListener('click',()=>{
     const sort=b.dataset.sort;
-    if(sort==='best'){
-      currentSort='best'; currentDir='asc';
-      document.querySelectorAll('.sort-btn').forEach(x=>{x.classList.remove('active');if(x.dataset.dir){x.dataset.dir='asc';x.textContent=x.textContent.replace('↓','↑');}});
-      b.classList.add('active');
-    } else if(currentSort===sort){
-      // Same button: toggle direction
-      currentDir = currentDir==='asc'?'desc':'asc';
-      const arrow = currentDir==='asc'?'↑':'↓';
-      const label = sort==='price'?'Preis':sort==='duration'?'Dauer':sort==='dep'?'Abflug':'Ankunft';
-      b.textContent=`${label} ${arrow}`;
-      b.dataset.dir=currentDir;
-    } else {
-      // New sort criterion
-      currentSort=sort; currentDir='asc';
-      document.querySelectorAll('.sort-btn').forEach(x=>{
-        x.classList.remove('active');
-        if(x.dataset.dir){
-          x.dataset.dir='asc';
-          const lbl=x.dataset.sort==='price'?'Preis':x.dataset.sort==='duration'?'Dauer':x.dataset.sort==='dep'?'Abflug':'Ankunft';
-          x.textContent=`${lbl} ↑`;
-        }
-      });
-      b.classList.add('active');
-      b.textContent=`${sort==='price'?'Preis':sort==='duration'?'Dauer':sort==='dep'?'Abflug':'Ankunft'} ↑`;
-    }
-    renderList();
+    if(S.sort===sort&&sort!=='best') S.dir=S.dir==='asc'?'desc':'asc';
+    else { S.sort=sort; S.dir='asc'; }
+    document.querySelectorAll('.sort-btn').forEach(x=>{
+      const on=x.dataset.sort===S.sort;
+      x.classList.toggle('active',on);
+      x.textContent=x.dataset.label+(x.dataset.sort==='best'?'':(on&&S.dir==='desc'?' ↓':' ↑'));
+    });
+    if(S.data) renderList();
   }));
+
+  // Klicks in den Ergebnissen (Kalender, Länder, Karten, Buchung)
+  $('results').addEventListener('click',e=>{
+    const res=e.target.closest('[data-res]');
+    if(res&&!res.disabled){ selectResult(+res.dataset.res); return; }
+    const a=e.target.closest('[data-act]');
+    if(!a) return;
+    const i=+a.dataset.i;
+    if(a.dataset.act==='next')       chooseNext(i);
+    if(a.dataset.act==='book')       showBooking(S.views[S.views.length-1].query, S.sorted[i].booking_token);
+    if(a.dataset.act==='back')       { S.views.pop(); renderList(); }
+    if(a.dataset.act==='explore-go') exploreGo(i);
+    if(a.dataset.act==='book-sep'){
+      const l=S.sepLegs.find(x=>x.key===a.dataset.key);
+      if(l) showBooking(l.query, l.flight.booking_token);
+    }
+  });
+  $('booking-body').addEventListener('click',e=>{
+    const b=e.target.closest('[data-bo]');
+    if(b) openBookingRequest(S.booking[+b.dataset.bo]);
+  });
+
+  // Abfrage-Schätzung aktuell halten
+  $('opts').addEventListener('change', updateOpts);
+  updateOpts();
 
   if(st.user) showUser(st.user);
   $('warn-proxy').style.display='none';
