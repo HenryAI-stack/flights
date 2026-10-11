@@ -165,6 +165,30 @@
     .tl-layover{display:flex;align-items:center;gap:6px;padding:4px 0}
     .tl-layover-pill{font-size:11px;color:var(--text-2);background:var(--surface-2);border:.5px solid var(--border);border-radius:20px;padding:3px 10px;white-space:nowrap}
 
+    /* Flugzeiten: Abflug | Dauer | Ankunft */
+    .fl-top{display:flex;align-items:center;gap:8px;padding:12px 1.25rem 0;flex-wrap:wrap}
+    .fl-airlines{font-size:12px;color:var(--text-2)}
+    .fl-main{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:8px 1.25rem 12px}
+    .fl-t{font-size:24px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+    .fl-ap{font-size:14px;font-weight:600;color:var(--text-1)}
+    .fl-d{font-size:12px;color:var(--text-2)}
+    .fl-end.arr{text-align:right}
+    .fl-plus{font-size:11px;font-weight:700;color:#c0392b;margin-left:2px}
+    .fl-mid{text-align:center;font-size:12px;color:var(--text-2);min-width:0}
+    .fl-line{position:relative;height:2px;background:var(--border-med);margin:6px 0;border-radius:1px}
+    .fl-line::before,.fl-line::after{content:'';position:absolute;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--sky)}
+    .fl-line::before{left:-2px} .fl-line::after{right:-2px}
+    .fl-dot{position:absolute;top:-3px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--surface);border:2px solid var(--text-3);box-sizing:border-box}
+    .fl-direct{color:var(--green);font-weight:600}
+    .fl-stops{color:#b45309;font-weight:600}
+    .fl-segs{border-top:.5px solid var(--border);padding:8px 1.25rem 10px;display:flex;flex-direction:column;gap:6px}
+    .fl-seg{display:flex;gap:10px;align-items:flex-start}
+    .fl-seg-times{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;font-size:14px;color:var(--text-1);font-variant-numeric:tabular-nums}
+    .fl-seg-date{font-size:12px;color:var(--text-2);margin-left:4px}
+    .fl-seg-sub{font-size:11px;color:var(--text-2)}
+    .fl-lay{margin-left:38px;font-size:12px;color:var(--text-2);background:var(--surface-2);border:.5px dashed var(--border-med);border-radius:6px;padding:4px 10px;align-self:flex-start}
+    .fl-lay.night{color:#b45309;border-color:#f0c040}
+
     .airline-logo{width:36px;height:36px;border-radius:8px;border:.5px solid var(--border);object-fit:contain;background:#fff;flex-shrink:0;padding:3px}
     .airline-fallback{width:36px;height:36px;border-radius:8px;border:.5px solid var(--border);background:var(--surface-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--text-2)}
     .farrow{color:var(--text-3);font-size:13px}
@@ -1284,105 +1308,81 @@ function tlLogo(leg){
   return `<div class="tl-logo-fb">${esc(airlineInitials(name))}</div>`;
 }
 
+/* SerpAPI-Zeit "2026-10-12 14:10" → {date:'2026-10-12', time:'14:10'} */
+function splitTime(t){
+  const [date='', time='']=String(t||'').split(' ');
+  return {date, time: time||'--:--'};
+}
+function fmtDur(min){ if(!min) return ''; const h=Math.floor(min/60); return h?`${h} h ${String(min%60).padStart(2,'0')} min`:`${min} min`; }
+function dayDiff(a,b){ return a&&b?Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/864e5):0; }
+const plusDays=n=>n>0?`<sup class="fl-plus" title="Ankunft ${n} Tag${n>1?'e':''} später">+${n}</sup>`:'';
+
 function legHtml(f, labelClass, labelText){
-  const segments = f.flights  || [];
-  const layovers = f.layovers || [];
-  const totalStops = layovers.length;
-  const dur = f.total_duration
-    ? `${Math.floor(f.total_duration/60)}h ${f.total_duration%60}min` : '';
+  const segs = f.flights  || [];
+  const lays = f.layovers || [];
+  const first = segs[0] || {}, last = segs[segs.length-1] || {};
+  const depA = first.departure_airport || {}, arrA = last.arrival_airport || {};
+  const dep = splitTime(depA.time), arr = splitTime(arrA.time);
+  const stops = lays.length;
+  const stopTxt = stops===0 ? 'Direktflug' : `${stops} Stopp${stops>1?'s':''}`;
+  const airlines = [...new Set(segs.map(s=>s.airline).filter(Boolean))].join(', ');
+  const dur = fmtDur(f.total_duration);
 
-  const firstSeg = segments[0]  || {};
-  const lastSeg  = segments[segments.length-1] || {};
-  const firstDep = firstSeg.departure_airport || {};
-  const lastArr  = lastSeg.arrival_airport    || {};
-
-  // ── Kompakter Header: BER → LHR  07:30 → 09:45  2h 15min  Direktflug ──
-  const header = `<div class="fleg-header">
-    ${labelText ? `<div class="fleg-label ${labelClass}">${labelText}</div>` : ''}
-    <div class="fleg-route">
-      <span class="fleg-airports">
-        ${esc(firstDep.id||'?')}
-        <span class="farrow">→</span>
-        ${esc(lastArr.id||'?')}
-      </span>
-      <span class="fleg-times">${esc(firstDep.time||'--:--')} – ${esc(lastArr.time||'--:--')}</span>
+  // Kopf: Abflug | Dauer/Stopps | Ankunft – Uhrzeit groß, Datum darunter
+  const head = `
+    <div class="fl-top">
+      ${labelText ? `<span class="fleg-label ${labelClass}">${labelText}</span>` : ''}
+      <span class="fl-airlines">${esc(airlines||'Airline unbekannt')}</span>
     </div>
-    <div class="fleg-right">
-      ${dur ? `<span class="fleg-dur">${esc(dur)}</span>` : ''}
-      <span class="ftag">${totalStops===0?'Direktflug':totalStops+' Stopp'+(totalStops>1?'s':'')}</span>
-    </div>
-  </div>`;
-
-  // ── Bei Direktflug: keine Timeline nötig, nur Airline-Info ──
-  if(segments.length <= 1){
-    const seg = segments[0] || {};
-    const airline = [seg.airline, seg.flight_number].filter(Boolean).join(' ') || 'Airline unbekannt';
-    const segDur = seg.duration ? `${Math.floor(seg.duration/60)}h ${seg.duration%60}min` : '';
-    return `<div class="fleg">${header}
-      <div class="fleg-timeline">
-        <div class="tl-row">
-          <div class="tl-left"><div class="tl-dot"></div><div class="tl-line"></div></div>
-          <div class="tl-body">
-            <div class="tl-seg">
-              ${tlLogo(seg)}
-              <div class="tl-seg-info">
-                <div class="tl-seg-main">${esc(airline)}</div>
-                <div class="tl-seg-sub">${esc(firstDep.id||'?')} ${esc(firstDep.time||'')} → ${esc(lastArr.id||'?')} ${esc(lastArr.time||'')}${segDur?' · <em>'+esc(segDur)+'</em>':''}</div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div class="fl-main">
+      <div class="fl-end">
+        <div class="fl-t">${esc(dep.time)}</div>
+        <div class="fl-ap">${esc(depA.id||'?')}</div>
+        <div class="fl-d">${esc(dayLabel(dep.date))}</div>
+      </div>
+      <div class="fl-mid">
+        <div>${esc(dur)}</div>
+        <div class="fl-line">${lays.map((_,i)=>`<span class="fl-dot" style="left:${((i+1)/(stops+1))*100}%"></span>`).join('')}</div>
+        <div class="${stops?'fl-stops':'fl-direct'}">${stopTxt}${stops?` · ${esc(lays.map(l=>l.id).join(', '))}`:''}</div>
+      </div>
+      <div class="fl-end arr">
+        <div class="fl-t">${esc(arr.time)}${plusDays(dayDiff(dep.date, arr.date))}</div>
+        <div class="fl-ap">${esc(arrA.id||'?')}</div>
+        <div class="fl-d">${esc(dayLabel(arr.date))}</div>
       </div>
     </div>`;
-  }
 
-  // ── Mit Stops: vertikale Timeline ──
-  let timelineHtml = '';
-  segments.forEach((seg, i) => {
-    const dep = seg.departure_airport || {};
-    const arr = seg.arrival_airport   || {};
-    const segDur = seg.duration ? `${Math.floor(seg.duration/60)}h ${seg.duration%60}min` : '';
-    const airline = [seg.airline, seg.flight_number].filter(Boolean).join(' ') || '?';
-    const layover = layovers[i];
-    const layMin  = layover?.duration || 0;
-    const layStr  = layMin
-      ? `${Math.floor(layMin/60)}h ${layMin%60}min Aufenthalt in ${esc(layover.id||arr.id||'?')}`
-      : '';
-    const isLast  = i === segments.length - 1;
-
-    timelineHtml += `
-      <div class="tl-row">
-        <div class="tl-left">
-          <div class="tl-dot"></div>
-          ${!isLast || layStr ? '<div class="tl-line"></div>' : ''}
-        </div>
-        <div class="tl-body">
-          <div class="tl-seg">
-            ${tlLogo(seg)}
-            <div class="tl-seg-info">
-              <div class="tl-seg-main">${esc(airline)}</div>
-              <div class="tl-seg-sub">
-                ${esc(dep.id||'?')} ${esc(dep.time||'')}
-                <span class="farrow">→</span>
-                ${esc(arr.id||'?')} ${esc(arr.time||'')}
-                ${segDur ? ` · <em>${esc(segDur)}</em>` : ''}
-              </div>
-            </div>
+  // Einzelne Flüge: Abflug → Ankunft je Segment, dazwischen Umstiege
+  const rows = segs.map((s,i)=>{
+    const d=s.departure_airport||{}, a=s.arrival_airport||{};
+    const sd=splitTime(d.time), sa=splitTime(a.time);
+    const lay=lays[i];
+    const flightInfo=[s.flight_number, s.airplane, fmtDur(s.duration)].filter(Boolean).join(' · ');
+    const layHtml = lay && i<segs.length-1 ? `
+      <div class="fl-lay${lay.overnight?' night':''}">
+        ⏱ ${esc(fmtDur(lay.duration)||'?')} Umstieg in ${esc(lay.name||lay.id||a.id||'?')}${lay.overnight?' · über Nacht':''}
+      </div>` : '';
+    return `
+      <div class="fl-seg">
+        ${tlLogo(s)}
+        <div class="fl-seg-body">
+          <div class="fl-seg-times">
+            <span><b>${esc(sd.time)}</b> ${esc(d.id||'?')}</span>
+            <span class="farrow">→</span>
+            <span><b>${esc(sa.time)}</b>${plusDays(dayDiff(sd.date, sa.date))} ${esc(a.id||'?')}</span>
+            <span class="fl-seg-date">${esc(dayLabel(sd.date))}</span>
           </div>
+          <div class="fl-seg-sub">${esc(s.airline||'')}${flightInfo?' · '+esc(flightInfo):''}</div>
+          <div class="fl-seg-sub">${esc(d.name||'')}${d.name&&a.name?' → ':''}${esc(a.name||'')}</div>
         </div>
-      </div>
-      ${layStr ? `
-      <div class="tl-row">
-        <div class="tl-left"><div class="tl-dot small"></div><div class="tl-line"></div></div>
-        <div class="tl-body tl-layover">
-          <div class="tl-layover-pill">⏱ ${layStr}</div>
-        </div>
-      </div>` : ''}`;
-  });
+      </div>${layHtml}`;
+  }).join('');
 
-  return `<div class="fleg">${header}
-    <div class="fleg-timeline">${timelineHtml}</div>
-  </div>`;
+  // Direktflug: Kopfzeile reicht; Flugnummer neben der Airline
+  if(segs.length<=1) return `<div class="fleg">${head.replace(
+    `<span class="fl-airlines">${esc(airlines||'Airline unbekannt')}</span>`,
+    `<span class="fl-airlines">${esc([airlines||'Airline unbekannt', first.flight_number].filter(Boolean).join(' · '))}</span>`)}</div>`;
+  return `<div class="fleg">${head}<div class="fl-segs">${rows}</div></div>`;
 }
 
 /* Google-Flights-Link als Fallback (öffnet dieselbe Suche bei Google) */
