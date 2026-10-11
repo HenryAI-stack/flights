@@ -10,8 +10,11 @@ const SEARCH_URL  = `https://www.secretflying.com/search2/?cityFrom=${CITY}&mont
 const MAX_DEALS   = 60;
 const RSS_PAGES   = 8;       // WordPress liefert je Feed-Seite ~10 Suchtreffer
 const SEARCH_PAGES = 6;      // Suchseite: ~10 Deals je Seite (inkl. alter Deals)
+// Folgeseiten genau im Format, das die Seite selbst nachlädt (snews_alp.nextLink)
 const searchPageUrl = n => n === 1 ? SEARCH_URL
-  : `https://www.secretflying.com/search2/page/${n}/?cityFrom=${CITY}&month=&showOldDeals=on&cityTo=`;
+  : `https://www.secretflying.com/search2/page/${n}/?cityFrom=${CITY}&month&showOldDeals=on&cityTo`;
+const PAGE_DELAY_MS = 4000;  // Abstand zwischen Seitenabrufen, sonst antwortet die Seite mit 403
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 const USER_AGENT  = 'Mozilla/5.0 (compatible; SkySearchDeals/1.0; +https://henryai-stack.github.io/flights/)';
 
 const decode = s => String(s || '')
@@ -95,8 +98,10 @@ export function parseSearchPage(html) {
   return deals;
 }
 
-async function get(url) {
-  const res = await fetch(url, { headers: { 'user-agent': USER_AGENT, accept: '*/*' } });
+async function get(url, referer = null) {
+  const headers = { 'user-agent': USER_AGENT, accept: '*/*' };
+  if (referer) headers.referer = referer;
+  const res = await fetch(url, { headers });
   if (!res.ok) throw new Error(`HTTP ${res.status} für ${url}`);
   return res.text();
 }
@@ -113,7 +118,8 @@ async function main() {
   counts.search = 0;
   for (let page = 1; page <= SEARCH_PAGES; page++) {
     try {
-      const html = await get(searchPageUrl(page));
+      if (page > 1) await sleep(PAGE_DELAY_MS);
+      const html = await get(searchPageUrl(page), page > 1 ? searchPageUrl(page - 1) : null);
       const found = parseSearchPage(html);
       console.log(`Suchseite ${page}: ${html.length} Zeichen, ${found.articles} Beiträge, davon ${found.length} lesbar`);
       if (page === 1 && !found.articles) problems.push('search: keine Deal-Beiträge im HTML gefunden');
