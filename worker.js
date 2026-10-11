@@ -1,7 +1,6 @@
 // Eigenständiger Cloudflare Worker – Alternative zur Pages Function.
-// Deploy: wrangler deploy worker.js --name skysearch-api --compatibility-date 2024-09-01
-//         wrangler secret put SERPAPI_KEY --name skysearch-api
-// Danach die Worker-URL in den Einstellungen der App als Proxy-URL eintragen.
+// Wird von .github/workflows/deploy.yml deployt (Konfiguration: wrangler.toml);
+// die Worker-URL landet dabei automatisch in der Seite auf GitHub Pages.
 import { handleRequest } from './lib/flights-core.js';
 
 export default {
