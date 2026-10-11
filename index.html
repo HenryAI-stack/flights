@@ -732,16 +732,16 @@ function searchAirports(query) {
 const AUTO_PROXY  = document.querySelector('meta[name="skysearch-api"]')?.content
                  || window.location.origin + '/api/flights';
 
-// Frühere Versionen haben beim Speichern immer die Standard-URL mitgespeichert –
-// die überdeckt sonst die beim Deploy eingetragene Worker-URL.
-if(localStorage.getItem('proxy_url')===window.location.origin+'/api/flights') localStorage.removeItem('proxy_url');
+// Früher gespeicherte Proxy-Adressen (alter GET-Proxy bzw. Standard-URL) passen nicht
+// zur neuen API und würden die beim Deploy eingetragene Adresse überdecken.
+localStorage.removeItem('proxy_url');
 
 // Früher war ein SerpAPI-Key im Code hinterlegt und wurde beim Speichern der
 // Einstellungen in localStorage übernommen – diesen Altbestand entfernen.
 if((localStorage.getItem('serpapi_key')||'').startsWith('af4a185cedc8')) localStorage.removeItem('serpapi_key');
 
 const st = {
-  proxyUrl: localStorage.getItem('proxy_url')          || AUTO_PROXY,
+  proxyUrl: localStorage.getItem('api_url')            || AUTO_PROXY,
   serpKey:  localStorage.getItem('serpapi_key')         || '',
   currency: localStorage.getItem('currency')            || 'EUR',
   lang:     localStorage.getItem('lang')                || 'de',
@@ -1107,7 +1107,7 @@ function saveSettings(){
   st.currency=$('currency-select').value;
   st.lang=$('lang-select').value;
   st.gl=$('gl-select').value;
-  if(raw) localStorage.setItem('proxy_url', st.proxyUrl); else localStorage.removeItem('proxy_url');
+  if(raw) localStorage.setItem('api_url', st.proxyUrl); else localStorage.removeItem('api_url');
   if(st.serpKey) localStorage.setItem('serpapi_key',st.serpKey); else localStorage.removeItem('serpapi_key');
   localStorage.setItem('gl',         st.gl);
   localStorage.setItem('currency',   st.currency);
