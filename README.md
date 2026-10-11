@@ -19,6 +19,8 @@ Eine Suche wird im Backend in mehrere SerpAPI-Abfragen aufgefächert, parallel a
 | **Günstige Tage vorab gratis prüfen** | Bei flexiblen Daten werden zuerst kostenlos die Richtpreise von Travelpayouts (Aviasales Data API) geprüft; live per SerpAPI abgefragt werden nur der Wunschtag und die 2 günstigsten anderen Tage. |
 | **Monatsübersicht** | Nach jeder Suche: Richtpreise für jeden Tag des Monats (gratis, Travelpayouts). Klick auf einen Tag startet die Live-Suche. |
 
+**Deals ab Warschau:** Der Deploy-Workflow läuft zusätzlich täglich (05:17 UTC) und holt mit `scripts/fetch-deals.mjs` die Angebote ab Warschau von [Secret Flying](https://www.secretflying.com/) (RSS-Feed der Suche, Fallback: Suchseite). Sie werden als `deals.json` mit der Seite veröffentlicht und dort mit Link zurück auf Secret Flying angezeigt. Ist die Quelle nicht erreichbar, bleibt die letzte Liste stehen.
+
 Außerdem: `show_hidden=true`, Google-Preiseinschätzung (`price_insights`) und Standard-Sortierung nach Preis.
 Hin- & Rückflüge sowie Multi-City-Strecken werden über `departure_token` Schritt für Schritt gewählt (der angezeigte Preis ist bereits der Gesamtpreis). Gebucht wird über die Buchungsoptionen von Google (`booking_token`).
 

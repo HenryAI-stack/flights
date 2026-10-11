@@ -12,6 +12,8 @@ name: Deploy
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '17 5 * * *'   # täglich: Deals ab Warschau von Secret Flying aktualisieren
   workflow_dispatch:
 
 permissions:
@@ -80,6 +82,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: pages
+        uses: actions/configure-pages@v5
       - name: Seite mit API-URL bauen
         env:
           API_URL: ${{ needs.worker.outputs.url }}
@@ -87,7 +94,8 @@ jobs:
           mkdir -p _site
           sed "s#<meta name=\"skysearch-api\" content=\"\" />#<meta name=\"skysearch-api\" content=\"${API_URL%/}\" />#" index.html > _site/index.html
           grep -q "content=\"${API_URL%/}\"" _site/index.html
-      - uses: actions/configure-pages@v5
+      - name: Deals ab Warschau holen (Secret Flying)
+        run: node scripts/fetch-deals.mjs _site/deals.json --fallback "${{ steps.pages.outputs.base_url }}/deals.json"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
