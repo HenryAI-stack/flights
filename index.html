@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SkySearch – Flüge suchen & buchen</title>
+  <!-- Adresse der Such-API; wird beim Deploy auf GitHub Pages mit der Worker-URL befüllt.
+       Leer = /api/flights auf derselben Domain (Cloudflare Pages). -->
+  <meta name="skysearch-api" content="" />
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -726,7 +729,12 @@ function searchAirports(query) {
     .slice(0,3);
 }
 
-const AUTO_PROXY  = window.location.origin + '/api/flights';
+const AUTO_PROXY  = document.querySelector('meta[name="skysearch-api"]')?.content
+                 || window.location.origin + '/api/flights';
+
+// Frühere Versionen haben beim Speichern immer die Standard-URL mitgespeichert –
+// die überdeckt sonst die beim Deploy eingetragene Worker-URL.
+if(localStorage.getItem('proxy_url')===window.location.origin+'/api/flights') localStorage.removeItem('proxy_url');
 
 // Früher war ein SerpAPI-Key im Code hinterlegt und wurde beim Speichern der
 // Einstellungen in localStorage übernommen – diesen Altbestand entfernen.
@@ -1099,7 +1107,7 @@ function saveSettings(){
   st.currency=$('currency-select').value;
   st.lang=$('lang-select').value;
   st.gl=$('gl-select').value;
-  localStorage.setItem('proxy_url',  st.proxyUrl);
+  if(raw) localStorage.setItem('proxy_url', st.proxyUrl); else localStorage.removeItem('proxy_url');
   if(st.serpKey) localStorage.setItem('serpapi_key',st.serpKey); else localStorage.removeItem('serpapi_key');
   localStorage.setItem('gl',         st.gl);
   localStorage.setItem('currency',   st.currency);

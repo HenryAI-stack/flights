@@ -1,0 +1,92 @@
+# Deployt die Such-API als Cloudflare Worker und die Seite auf GitHub Pages.
+#
+# Benötigte Repository-Secrets (Settings → Secrets and variables → Actions):
+#   SERPAPI_KEY            – SerpAPI-Key, wird als Worker-Secret hinterlegt
+#   CLOUDFLARE_API_TOKEN   – Cloudflare-API-Token (Vorlage „Edit Cloudflare Workers")
+#   CLOUDFLARE_ACCOUNT_ID  – Cloudflare Account-ID
+# Optionale Repository-Variable:
+#   API_URL                – feste API-Adresse (z. B. eigene Domain) statt der workers.dev-URL
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+
+  worker:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      url: ${{ steps.url.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Worker deployen
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          secrets: |
+            SERPAPI_KEY
+        env:
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+      - name: Worker-URL ermitteln
+        id: url
+        env:
+          FIXED: ${{ vars.API_URL }}
+          DEPLOYED: ${{ steps.deploy.outputs.deployment-url }}
+          OUTPUT: ${{ steps.deploy.outputs.command-output }}
+        run: |
+          URL="${FIXED:-$DEPLOYED}"
+          if [ -z "$URL" ]; then
+            URL=$(printf '%s' "$OUTPUT" | grep -oE 'https://[A-Za-z0-9.-]+\.workers\.dev' | head -n1)
+          fi
+          if [ -z "$URL" ]; then
+            echo "::error::Worker-URL nicht gefunden. Ist eine workers.dev-Subdomain eingerichtet? Sonst Repository-Variable API_URL setzen."
+            exit 1
+          fi
+          echo "API-URL: $URL"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+  pages:
+    needs: worker
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Seite mit API-URL bauen
+        env:
+          API_URL: ${{ needs.worker.outputs.url }}
+        run: |
+          mkdir -p _site
+          sed "s#<meta name=\"skysearch-api\" content=\"\" />#<meta name=\"skysearch-api\" content=\"${API_URL%/}\" />#" index.html > _site/index.html
+          grep -q "content=\"${API_URL%/}\"" _site/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

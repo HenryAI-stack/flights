@@ -1,0 +1,10 @@
+# Cloudflare Worker für die Such-API (deployt per .github/workflows/deploy.yml)
+name = "skysearch-api"
+main = "worker.js"
+compatibility_date = "2024-09-01"
+workers_dev = true
+
+[vars]
+# Nur die eigene Seite darf die API (und damit das SerpAPI-Kontingent) nutzen.
+# Bei eigener Domain für GitHub Pages hier ergänzen (kommagetrennt).
+ALLOWED_ORIGINS = "https://henryai-stack.github.io"
