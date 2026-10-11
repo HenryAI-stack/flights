@@ -42,3 +42,16 @@ test('Expired im Titel wird erkannt und entfernt', () => {
   assert.equal(d.to, 'Lisbon, Portugal');
   assert.equal(d.trip, 'oneway');
 });
+
+test('Suchseite: relative Links, title-Attribut und URL-Slug als Titel', () => {
+  const html = `<a href="/posts/warsaw-poland-to-oslo-norway-for-only-19-one-way/"><img src="x.jpg"></a>
+    <a title="Warsaw, Poland to Rome, Italy for only €25 roundtrip" href="https://www.secretflying.com/posts/x-rome/"><img></a>
+    <a href="https://www.secretflying.com/posts/vienna-austria-to-rome-italy/">Vienna</a>`;
+  const deals = parseSearchPage(html);
+  assert.equal(deals.links, 3);
+  assert.equal(deals.length, 2);
+  assert.equal(deals[0].link, 'https://www.secretflying.com/posts/warsaw-poland-to-oslo-norway-for-only-19-one-way/');
+  assert.equal(deals[0].trip, 'oneway');
+  assert.equal(deals[1].to, 'Rome, Italy');
+  assert.equal(deals[1].price, '€25');
+});

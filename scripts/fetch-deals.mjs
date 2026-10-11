@@ -7,7 +7,8 @@
 const CITY        = 'Warsaw';
 const RSS_URL     = `https://www.secretflying.com/?s=${CITY}&feed=rss2`;
 const SEARCH_URL  = `https://www.secretflying.com/search2/?cityFrom=${CITY}&month=&showOldDeals=on&cityTo=`;
-const MAX_DEALS   = 40;
+const MAX_DEALS   = 60;
+const RSS_PAGES   = 8;       // WordPress liefert je Feed-Seite ~10 Suchtreffer
 const USER_AGENT  = 'Mozilla/5.0 (compatible; SkySearchDeals/1.0; +https://henryai-stack.github.io/flights/)';
 
 const decode = s => String(s || '')
@@ -53,15 +54,26 @@ export function parseRss(xml) {
   return items.map(toDeal).filter(Boolean);
 }
 
-/* Fallback: Links auf Deal-Beiträge aus der Suchseite lesen. */
+/* Slug "warsaw-poland-to-tokyo-japan-for-only-389-roundtrip" → lesbarer Titel */
+const slugTitle = href => (href.match(/\/posts\/([^/]+)\/?$/)?.[1] || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+
+/* Suchseite: Links auf Deal-Beiträge lesen. Titel aus Linktext, title-Attribut
+   oder notfalls aus dem URL-Slug. Liefert auch die Zahl aller Deal-Links (Diagnose). */
 export function parseSearchPage(html) {
   const seen = new Set();
   const deals = [];
-  for (const [, href, inner] of String(html).matchAll(/<a\b[^>]*href="(https:\/\/www\.secretflying\.com\/posts\/[^"#?]+)"[^>]*>([\s\S]*?)<\/a>/gi)) {
+  let links = 0;
+  const re = /<a\b([^>]*)href="((?:https:\/\/www\.secretflying\.com)?\/posts\/[^"#?]+)"([^>]*)>([\s\S]*?)<\/a>/gi;
+  for (const [, pre, rawHref, post, inner] of String(html).matchAll(re)) {
+    links++;
+    const href = rawHref.startsWith('/') ? `https://www.secretflying.com${rawHref}` : rawHref;
     if (seen.has(href)) continue;
-    const d = toDeal({ title: inner, link: href });
+    const attrTitle = `${pre} ${post}`.match(/title="([^"]+)"/)?.[1];
+    const d = toDeal({ title: inner, link: href }) || (attrTitle && toDeal({ title: attrTitle, link: href }))
+      || toDeal({ title: slugTitle(href), link: href });
     if (d) { seen.add(href); deals.push(d); }
   }
+  deals.links = links;
   return deals;
 }
 
@@ -76,21 +88,43 @@ async function main() {
   if (!out) throw new Error('Ausgabedatei fehlt.');
   const { writeFile } = await import('node:fs/promises');
   const problems = [];
-  let deals = [];
-  let source = null;
+  const byLink = new Map();
+  const counts = {};
 
-  for (const [name, url, parse] of [['rss', RSS_URL, parseRss], ['search', SEARCH_URL, parseSearchPage]]) {
+  // 1) RSS-Feed der Suche, mehrere Seiten (beste Daten: Titel, Datum, Status)
+  counts.rss = 0;
+  for (let page = 1; page <= RSS_PAGES; page++) {
     try {
-      deals = parse(await get(url));
-      if (deals.length) { source = name; break; }
-      problems.push(`${name}: keine Deals ab ${CITY} gefunden`);
-    } catch (e) { problems.push(`${name}: ${e.message}`); }
+      const xml = await get(page === 1 ? RSS_URL : `${RSS_URL}&paged=${page}`);
+      const items = (xml.match(/<item\b/gi) || []).length;
+      const found = parseRss(xml);
+      console.log(`RSS Seite ${page}: ${items} Beiträge, davon ${found.length} ab ${CITY}`);
+      for (const d of found) if (!byLink.has(d.link)) { byLink.set(d.link, d); counts.rss++; }
+      if (!items) break;
+    } catch (e) {
+      if (page === 1) problems.push(`rss: ${e.message}`);
+      else console.log(`RSS Seite ${page}: ${e.message} – Ende`);
+      break;
+    }
   }
+
+  // 2) Suchseite mit älteren Deals (ergänzt, was der Feed nicht liefert)
+  counts.search = 0;
+  try {
+    const html = await get(SEARCH_URL);
+    const found = parseSearchPage(html);
+    console.log(`Suchseite: ${html.length} Zeichen, ${found.links} Deal-Links, davon ${found.length} ab ${CITY}`);
+    if (!found.links) problems.push('search: keine Deal-Links im HTML (Seite lädt Ergebnisse vermutlich per JavaScript)');
+    for (const d of found) if (!byLink.has(d.link)) { byLink.set(d.link, d); counts.search++; }
+  } catch (e) { problems.push(`search: ${e.message}`); }
+
+  const deals = [...byLink.values()];
+  const source = Object.entries(counts).filter(([, n]) => n).map(([k, n]) => `${k}:${n}`).join(', ') || null;
 
   let result;
   if (deals.length) {
     deals.sort((a, b) => (a.expired - b.expired) || String(b.date || '').localeCompare(String(a.date || '')));
-    result = { city: CITY, source, updated: new Date().toISOString(), searchUrl: SEARCH_URL, deals: deals.slice(0, MAX_DEALS) };
+    result = { city: CITY, source, counts, updated: new Date().toISOString(), searchUrl: SEARCH_URL, deals: deals.slice(0, MAX_DEALS) };
   } else if (flag === '--fallback' && fallbackUrl) {
     // Quelle nicht erreichbar → letzte veröffentlichte Liste behalten
     try { result = JSON.parse(await get(fallbackUrl)); result.stale = true; }
