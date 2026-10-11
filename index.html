@@ -320,6 +320,9 @@
     .deal-badge{display:inline-block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:1px 6px;border-radius:4px;background:var(--surface-2);color:var(--text-2);margin-left:6px;vertical-align:middle}
     .deal a{margin-top:auto;padding-top:6px;font-size:12px;font-weight:600;color:var(--sky);text-decoration:none}
     .deal a:hover{text-decoration:underline}
+    .deals-more{display:block;width:100%;margin-top:10px;padding:9px;background:var(--surface);border:.5px solid var(--border-med);border-radius:var(--r);font-size:13px;font-weight:600;color:var(--sky);cursor:pointer}
+    .deals-more:hover{background:var(--sky-light)}
+    .deals-sub{font-size:13px;font-weight:600;color:var(--text-2);margin:16px 0 8px}
     .deals-foot{font-size:12px;color:var(--text-3);margin-top:10px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
     .deals-foot a{color:var(--sky)}
 
@@ -553,7 +556,7 @@
       <h3>✈️ Deals ab Warschau</h3>
       <label class="chk"><input type="checkbox" id="deals-expired"/> abgelaufene zeigen</label>
     </div>
-    <div class="deals-grid" id="deals-list"></div>
+    <div id="deals-list"></div>
     <div class="deals-foot" id="deals-foot"></div>
   </section>
 </div>
@@ -1826,22 +1829,45 @@ async function loadDeals(){
     renderDeals();
   }catch{}
 }
-function renderDeals(){
-  if(!DEALS?.deals?.length){ $('deals').style.display='none'; return; }
-  const showOld=$('deals-expired').checked;
-  const list=DEALS.deals.filter(d=>showOld||!d.expired);
+const DEALS_VISIBLE=10, DEALS_MAX_AGE_DAYS=42;   // 6 Wochen
+let dealsExpanded=false;
+// Abgelaufen: von Secret Flying markiert oder älter als 6 Wochen
+const dealExpired=d=>d.expired||(d.date&&isoDiff(d.date,new Date().toISOString().slice(0,10))>DEALS_MAX_AGE_DAYS);
+
+function dealCard(d, old){
   const trip={roundtrip:'Hin & Rück', oneway:'Nur Hinflug'};
-  $('deals-list').innerHTML=list.length?list.map(d=>`
-    <div class="deal${d.expired?' expired':''}">
-      <div class="deal-to">${esc(d.to||d.title)}${d.expired?'<span class="deal-badge">abgelaufen</span>':''}</div>
+  return `<div class="deal${old?' expired':''}">
+      <div class="deal-to">${esc(d.to||d.title)}${old?'<span class="deal-badge">abgelaufen</span>':''}</div>
       <div class="deal-meta">ab ${esc(d.from||'Warschau')}${d.trip?` · ${trip[d.trip]}`:''}</div>
       ${d.price?`<div class="deal-price">${esc(d.price)}</div>`:''}
       <div class="deal-meta">${d.date?`veröffentlicht ${esc(isoToDE(d.date))}`:''}</div>
       <a href="${esc(d.link)}" target="_blank" rel="noopener">Zum Deal auf Secret Flying ↗</a>
-    </div>`).join('')
-    :'<p class="muted">Aktuell keine gültigen Deals – „abgelaufene zeigen" für ältere Angebote.</p>';
+    </div>`;
+}
+
+function renderDeals(){
+  if(!DEALS?.deals?.length){ $('deals').style.display='none'; return; }
+  const byDate=(a,b)=>String(b.date||'').localeCompare(String(a.date||''));
+  const current=DEALS.deals.filter(d=>!dealExpired(d)).sort(byDate);
+  const old=DEALS.deals.filter(dealExpired).sort(byDate);
+  const shown=dealsExpanded?current:current.slice(0,DEALS_VISIBLE);
+  const hidden=current.length-shown.length;
+
+  let html=current.length
+    ? `<div class="deals-grid">${shown.map(d=>dealCard(d,false)).join('')}</div>`
+    : '<p class="muted">Aktuell keine Deals aus den letzten 6 Wochen.</p>';
+  if(current.length>DEALS_VISIBLE){
+    html+=`<button class="deals-more" id="deals-more">${dealsExpanded?'Weniger Deals anzeigen ▲':`Weitere Deals (${hidden}) ▼`}</button>`;
+  }
+  if(old.length&&$('deals-expired').checked){
+    html+=`<h4 class="deals-sub">Abgelaufen (${old.length})</h4><div class="deals-grid">${old.map(d=>dealCard(d,true)).join('')}</div>`;
+  }
+  $('deals-list').innerHTML=html;
+  $('deals-expired').parentElement.lastChild.textContent=` abgelaufene zeigen (${old.length})`;
+  $('deals-expired').parentElement.style.display=old.length?'':'none';
+
   const upd=DEALS.updated?isoToDE(DEALS.updated.slice(0,10)):'';
-  $('deals-foot').innerHTML=`<span>Quelle: Secret Flying · täglich aktualisiert${upd?` · Stand ${esc(upd)}`:''}${DEALS.stale?' (Quelle zuletzt nicht erreichbar)':''}</span>
+  $('deals-foot').innerHTML=`<span>Quelle: Secret Flying · täglich aktualisiert${upd?` · Stand ${esc(upd)}`:''}${DEALS.stale?' (Quelle zuletzt nicht erreichbar)':''} · älter als 6 Wochen = abgelaufen</span>
     <a href="${esc(DEALS.searchUrl||'https://www.secretflying.com/')}" target="_blank" rel="noopener">Alle Deals auf Secret Flying ↗</a>`;
   $('deals').style.display='block';
 }
@@ -1940,6 +1966,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if(st.user) showUser(st.user);
   $('deals-expired').addEventListener('change', renderDeals);
+  $('deals-list').addEventListener('click',e=>{
+    if(e.target.closest('#deals-more')){ dealsExpanded=!dealsExpanded; renderDeals(); }
+  });
   loadDeals();
   $('warn-proxy').style.display='none';
 });
