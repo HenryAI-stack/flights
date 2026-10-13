@@ -8,3 +8,11 @@ workers_dev = true
 # Nur die eigene Seite darf die API (und damit das SerpAPI-Kontingent) nutzen.
 # Bei eigener Domain für GitHub Pages hier ergänzen (kommagetrennt).
 ALLOWED_ORIGINS = "https://henryai-stack.github.io"
+# Repo und Workflow, die der Cron-Trigger täglich startet (Deals aktualisieren).
+GH_REPO = "HenryAI-stack/flights"
+GH_WORKFLOW = "deploy.yml"
+
+# Zuverlässiger als GitHubs eigener Zeitplan: Cloudflare startet den Deploy täglich
+# um 05:17 UTC (benötigt das Worker-Secret GH_DISPATCH_TOKEN).
+[triggers]
+crons = ["17 5 * * *"]

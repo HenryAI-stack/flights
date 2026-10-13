@@ -21,6 +21,8 @@ Eine Suche wird im Backend in mehrere SerpAPI-Abfragen aufgefächert, parallel a
 
 **Deals ab Warschau:** Der Deploy-Workflow läuft zusätzlich täglich (05:17 UTC) und holt mit `scripts/fetch-deals.mjs` die Angebote ab Warschau von [Secret Flying](https://www.secretflying.com/) (RSS-Feed der Suche, Fallback: Suchseite). Sie werden als `deals.json` mit der Seite veröffentlicht und dort mit Link zurück auf Secret Flying angezeigt. Ist die Quelle nicht erreichbar, bleibt die letzte Liste stehen.
 
+**Zuverlässiger täglicher Start:** GitHubs Zeitplan startet oft Stunden zu spät oder gar nicht. Deshalb hat der Worker einen Cloudflare-Cron-Trigger (05:17 UTC, `wrangler.toml`), der den Workflow per `workflow_dispatch` startet. Dafür einen Fine-grained GitHub-Token anlegen (Settings → Developer settings → Fine-grained tokens; *Only select repositories* → dieses Repo; Repository permissions → *Actions: Read and write*) und im Cloudflare-Dashboard beim Worker `skysearch-api` unter Settings → Variables and Secrets als Secret `GH_DISPATCH_TOKEN` eintragen (bleibt bei weiteren Deploys erhalten). Ohne Token schreibt der Cron nur einen Hinweis ins Worker-Log. Der GitHub-Zeitplan bleibt als Reserve aktiv.
+
 Außerdem: `show_hidden=true`, Google-Preiseinschätzung (`price_insights`) und Standard-Sortierung nach Preis.
 Hin- & Rückflüge sowie Multi-City-Strecken werden über `departure_token` Schritt für Schritt gewählt (der angezeigte Preis ist bereits der Gesamtpreis). Gebucht wird über die Buchungsoptionen von Google (`booking_token`).
 
