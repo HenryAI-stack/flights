@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseRss, parseSearchPage, toDeal } from '../scripts/fetch-deals.mjs';
+import { parseRss, parseSearchPage, toDeal, mergeDeals } from '../scripts/fetch-deals.mjs';
 
 const RSS = `<?xml version="1.0"?><rss><channel>
 <item><title><![CDATA[Warsaw, Poland to Tokyo, Japan for only €389 roundtrip]]></title>
@@ -52,4 +52,27 @@ test('Suchseite (echte Struktur): Artikel, Sammeldeals, abgelaufen, gesperrte/We
   assert.equal(expired.title, 'Warsaw, Poland to Mombasa, Kenya for only €256 roundtrip');
   assert.equal(cairo.price, '€201');
   assert.equal(cairo.date, '2026-08-22');
+});
+
+test('mergeDeals: alte Deals bleiben, neue Daten gewinnen, zu alte fallen weg', () => {
+  const prev = [
+    { link: 'a', title: 'A', date: '2026-10-10', expired: false },
+    { link: 'b', title: 'B', date: '2026-10-01', expired: false },
+    { link: 'c', title: 'C', date: '2026-05-01', expired: true },
+  ];
+  const fresh = [
+    { link: 'a', title: 'A', date: null, expired: true },
+    { link: 'd', title: 'D', date: '2026-10-12', expired: false },
+  ];
+  const { deals, kept } = mergeDeals(fresh, prev, { today: '2026-10-13' });
+  assert.equal(kept, 1);
+  assert.deepEqual(deals.map(d => d.link), ['d', 'b', 'a']);
+  const a = deals.find(d => d.link === 'a');
+  assert.equal(a.expired, true);
+  assert.equal(a.date, '2026-10-10');
+});
+
+test('mergeDeals: ohne alte Liste und mit Obergrenze', () => {
+  const fresh = [1, 2, 3].map(i => ({ link: `l${i}`, date: `2026-10-0${i}`, expired: false }));
+  assert.deepEqual(mergeDeals(fresh, undefined, { max: 2 }).deals.map(d => d.link), ['l3', 'l2']);
 });
