@@ -3,6 +3,7 @@
 // und verlinkt jeden Deal zurück auf Secret Flying.
 //
 // Aufruf: node scripts/fetch-deals.mjs <ausgabe.json> [--fallback <url der alten deals.json>]
+// Die alte Liste wird mit den neuen Deals zusammengeführt (siehe mergeDeals).
 
 const CITY        = 'Warsaw';
 const RSS_URL     = `https://www.secretflying.com/?s=${CITY}&feed=rss2`;
@@ -98,6 +99,29 @@ export function parseSearchPage(html) {
   return deals;
 }
 
+const KEEP_DAYS = 90;        // bisherige Deals so lange behalten, auch wenn die Quelle sie gerade nicht liefert
+const byDate = (a, b) => (a.expired - b.expired) || String(b.date || '').localeCompare(String(a.date || ''));
+
+/* Neue Deals mit der bisher veröffentlichten Liste zusammenführen: Ist eine Seite
+   von Secret Flying gerade gesperrt, verschwinden die Deals von dort nicht.
+   Neue Daten gewinnen (z. B. Status „abgelaufen“), fehlendes Datum kommt aus der alten Liste. */
+export function mergeDeals(fresh, previous = [], { today = new Date().toISOString().slice(0, 10), keepDays = KEEP_DAYS, max = MAX_DEALS } = {}) {
+  const cutoff = new Date(Date.parse(today) - keepDays * 864e5).toISOString().slice(0, 10);
+  const old = new Map((previous || []).filter(d => d?.link).map(d => [d.link, d]));
+  const byLink = new Map();
+  for (const d of fresh) {
+    const prev = old.get(d.link);
+    byLink.set(d.link, prev ? { ...d, date: d.date || prev.date || null } : d);
+  }
+  let kept = 0;
+  for (const [link, d] of old) {
+    if (byLink.has(link) || (d.date && d.date < cutoff)) continue;
+    byLink.set(link, d);
+    kept++;
+  }
+  return { deals: [...byLink.values()].sort(byDate).slice(0, max), kept };
+}
+
 async function get(url, referer = null) {
   const headers = { 'user-agent': USER_AGENT, accept: '*/*' };
   if (referer) headers.referer = referer;
@@ -149,17 +173,24 @@ async function main() {
     }
   }
 
-  const deals = [...byLink.values()];
+  // 3) Bisher veröffentlichte Liste einlesen und zusammenführen
+  let previous = null;
+  if (flag === '--fallback' && fallbackUrl) {
+    try { previous = JSON.parse(await get(fallbackUrl)); }
+    catch (e) { problems.push(`bisherige Liste: ${e.message}`); }
+  }
+
+  const fresh = [...byLink.values()];
+  const { deals, kept } = mergeDeals(fresh, previous?.deals);
+  counts.kept = kept;
   const source = Object.entries(counts).filter(([, n]) => n).map(([k, n]) => `${k}:${n}`).join(', ') || null;
 
   let result;
-  if (deals.length) {
-    deals.sort((a, b) => (a.expired - b.expired) || String(b.date || '').localeCompare(String(a.date || '')));
-    result = { city: CITY, source, counts, updated: new Date().toISOString(), searchUrl: SEARCH_URL, deals: deals.slice(0, MAX_DEALS) };
-  } else if (flag === '--fallback' && fallbackUrl) {
+  if (fresh.length) {
+    result = { city: CITY, source, counts, updated: new Date().toISOString(), searchUrl: SEARCH_URL, deals };
+  } else if (previous) {
     // Quelle nicht erreichbar → letzte veröffentlichte Liste behalten
-    try { result = JSON.parse(await get(fallbackUrl)); result.stale = true; }
-    catch (e) { problems.push(`fallback: ${e.message}`); }
+    result = { ...previous, deals, stale: true };
   }
   result ||= { city: CITY, source: null, updated: new Date().toISOString(), searchUrl: SEARCH_URL, deals: [] };
 
