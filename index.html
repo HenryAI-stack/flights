@@ -1844,10 +1844,10 @@ function dealCard(d, old){
   const f4f=d.source==='fly4free';
   const trip={roundtrip:'Hin & Rück', oneway:'Nur Hinflug'};
   return `<div class="deal${old?' expired':''}">
-      <div class="deal-to">${esc(d.to||d.title)}${old?'<span class="deal-badge">abgelaufen</span>':''}</div>
+      <div class="deal-to">${esc(d.toDe||d.to||d.titleDe||d.title)}${old?'<span class="deal-badge">abgelaufen</span>':''}</div>
       <div class="deal-meta">ab ${esc(d.from||'Warschau')}${d.trip?` · ${trip[d.trip]}`:''}</div>
       ${d.price?`<div class="deal-price">${esc(d.price)}</div>`:''}
-      ${f4f?`<div class="deal-meta deal-title">${esc(d.title)}</div>`:''}
+      ${f4f?`<div class="deal-meta deal-title" title="${esc(d.title)}">${esc(d.titleDe||d.title)}</div>`:''}
       <div class="deal-meta">${d.date?`veröffentlicht ${esc(isoToDE(d.date))}`:''}</div>
       <a href="${esc(d.link)}" target="_blank" rel="noopener">Zum Deal auf ${f4f?'Fly4free.pl':'Secret Flying'} ↗</a>
     </div>`;

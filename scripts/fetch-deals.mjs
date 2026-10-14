@@ -185,6 +185,49 @@ export function combineFly4free(pageDeals, rssDeals) {
   return out;
 }
 
+/* Polnische Angebote (Fly4free) ins Deutsche übersetzen: DeepL API Free, wenn
+   DEEPL_API_KEY gesetzt ist, sonst MyMemory (ohne Key, ~5000 Zeichen/Tag).
+   Übersetzungen bleiben in deals.json und werden über mergeDeals wiederverwendet. */
+const TRANSLATE_MAX = 40;    // höchstens so viele Angebote pro Lauf neu übersetzen
+
+async function deepl(texts, key, fetchImpl) {
+  const body = new URLSearchParams({ source_lang: 'PL', target_lang: 'DE' });
+  for (const t of texts) body.append('text', t);
+  const host = /:fx$/.test(key) ? 'api-free.deepl.com' : 'api.deepl.com';
+  const res = await fetchImpl(`https://${host}/v2/translate`, {
+    method: 'POST', body,
+    headers: { Authorization: `DeepL-Auth-Key ${key}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+  if (!res.ok) throw new Error(`DeepL HTTP ${res.status}`);
+  return (await res.json()).translations.map(t => t.text);
+}
+
+async function myMemory(texts, fetchImpl) {
+  const out = [];
+  for (const t of texts) {
+    const res = await fetchImpl(`https://api.mymemory.translated.net/get?langpair=pl|de&q=${encodeURIComponent(t)}`);
+    if (!res.ok) throw new Error(`MyMemory HTTP ${res.status}`);
+    const j = await res.json();
+    if (j.responseStatus !== 200 && j.responseStatus !== '200') throw new Error(`MyMemory: ${j.responseDetails || j.responseStatus}`);
+    out.push(decode(j.responseData?.translatedText) || t);
+  }
+  return out;
+}
+
+export async function translateDeals(deals, { deeplKey = '', fetchImpl = fetch, max = TRANSLATE_MAX } = {}) {
+  const todo = deals.filter(d => d.source === 'fly4free' && !d.titleDe).slice(0, max);
+  if (!todo.length) return { translated: 0, via: null };
+  const texts = todo.flatMap(d => [d.title, d.to || '']);
+  const via = deeplKey ? 'deepl' : 'mymemory';
+  const keep = texts.map((t, i) => [t, i]).filter(([t]) => t);
+  const res = deeplKey ? await deepl(keep.map(([t]) => t), deeplKey, fetchImpl)
+                       : await myMemory(keep.map(([t]) => t), fetchImpl);
+  const tr = [...texts];
+  keep.forEach(([, i], n) => { tr[i] = res[n]; });
+  todo.forEach((d, n) => { d.titleDe = tr[2 * n]; d.toDe = d.to ? tr[2 * n + 1] : null; });
+  return { translated: todo.length, via };
+}
+
 const KEEP_DAYS = 90;        // bisherige Deals so lange behalten, auch wenn die Quelle sie gerade nicht liefert
 const byDate = (a, b) => (a.expired - b.expired) || String(b.date || '').localeCompare(String(a.date || ''));
 
@@ -199,6 +242,7 @@ export function mergeDeals(fresh, previous = [], { today = new Date().toISOStrin
     const prev = old.get(d.link);
     const { undated, ...deal } = d;
     deal.date = d.date || prev?.date || (undated ? today : null);   // ohne Datum: Tag des ersten Auftauchens
+    if (prev?.titleDe && prev.title === d.title) Object.assign(deal, { titleDe: prev.titleDe, toDe: prev.toDe ?? null });
     byLink.set(d.link, deal);
   }
   let kept = 0;
@@ -301,6 +345,10 @@ async function main() {
 
   const fresh = [...byLink.values()];
   const { deals, kept } = mergeDeals(fresh, previous?.deals);
+  try {
+    const t = await translateDeals(deals, { deeplKey: process.env.DEEPL_API_KEY || '' });
+    if (t.translated) console.log(`${t.translated} Angebote übersetzt (${t.via}).`);
+  } catch (e) { problems.push(`Übersetzung: ${e.message} – Angebote bleiben vorerst polnisch`); }
   counts.kept = kept;
   const source = Object.entries(counts).filter(([, n]) => n).map(([k, n]) => `${k}:${n}`).join(', ') || null;
 

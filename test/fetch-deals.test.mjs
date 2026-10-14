@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseRss, parseSearchPage, parseFly4free, parseFly4freeRss, combineFly4free, toDeal, mergeDeals } from '../scripts/fetch-deals.mjs';
+import { parseRss, parseSearchPage, parseFly4free, parseFly4freeRss, combineFly4free, translateDeals, toDeal, mergeDeals } from '../scripts/fetch-deals.mjs';
 
 const RSS = `<?xml version="1.0"?><rss><channel>
 <item><title><![CDATA[Warsaw, Poland to Tokyo, Japan for only €389 roundtrip]]></title>
@@ -131,4 +131,43 @@ test('Fly4free-Feed liefert Datum; Seite und Feed werden kombiniert, nur Flüge'
   assert.equal('undated' in all[0], false);
   assert.equal(all[1].undated, true);             // nicht im Feed
   assert.equal('package' in all[2], false);
+});
+
+test('translateDeals: DeepL übersetzt Titel und Ziel der Fly4free-Angebote', async () => {
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    calls.push({ url, init });
+    const texts = new URLSearchParams(init.body.toString()).getAll('text');
+    return new Response(JSON.stringify({ translations: texts.map(t => ({ text: `DE:${t}` })) }));
+  };
+  const deals = [
+    { source: 'fly4free', title: 'Tanie loty na Maltę', to: 'Malta' },
+    { source: 'fly4free', title: 'Szalona Środa', to: null },
+    { source: 'fly4free', title: 'x', to: 'y', titleDe: 'schon übersetzt' },
+    { title: 'Warsaw to Tokyo', to: 'Tokyo' },
+  ];
+  const r = await translateDeals(deals, { deeplKey: 'abc:fx', fetchImpl });
+  assert.deepEqual(r, { translated: 2, via: 'deepl' });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://api-free.deepl.com/v2/translate');
+  assert.equal(calls[0].init.headers.Authorization, 'DeepL-Auth-Key abc:fx');
+  assert.deepEqual([deals[0].titleDe, deals[0].toDe], ['DE:Tanie loty na Maltę', 'DE:Malta']);
+  assert.deepEqual([deals[1].titleDe, deals[1].toDe], ['DE:Szalona Środa', null]);
+  assert.equal(deals[2].titleDe, 'schon übersetzt');
+  assert.equal('titleDe' in deals[3], false);
+});
+
+test('translateDeals: ohne Key über MyMemory; mergeDeals behält Übersetzungen', async () => {
+  const fetchImpl = async url => {
+    const q = new URL(url).searchParams.get('q');
+    return new Response(JSON.stringify({ responseStatus: 200, responseData: { translatedText: `DE:${q}` } }));
+  };
+  const deals = [{ source: 'fly4free', title: 'Cypr od 183 PLN', to: 'Cypr', link: 'c', date: '2026-10-12', expired: false }];
+  assert.deepEqual(await translateDeals(deals, { fetchImpl }), { translated: 1, via: 'mymemory' });
+  assert.equal(deals[0].toDe, 'DE:Cypr');
+  const fresh = [{ source: 'fly4free', title: 'Cypr od 183 PLN', to: 'Cypr', link: 'c', date: '2026-10-12', expired: false }];
+  const merged = mergeDeals(fresh, deals, { today: '2026-10-14' }).deals;
+  assert.equal(merged[0].titleDe, 'DE:Cypr od 183 PLN');
+  const changed = mergeDeals([{ ...fresh[0], title: 'Cypr od 150 PLN' }], deals, { today: '2026-10-14' }).deals;
+  assert.equal('titleDe' in changed[0], false);   // Titel geändert → neu übersetzen
 });
