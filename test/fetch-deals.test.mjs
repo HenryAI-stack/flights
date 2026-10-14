@@ -133,12 +133,12 @@ test('Fly4free-Feed liefert Datum; Seite und Feed werden kombiniert, nur Flüge'
   assert.equal('package' in all[2], false);
 });
 
-test('translateDeals: DeepL übersetzt Titel und Ziel der Fly4free-Angebote', async () => {
+test('translateDeals: Google übersetzt Titel und Ziel der Fly4free-Angebote', async () => {
   const calls = [];
-  const fetchImpl = async (url, init) => {
-    calls.push({ url, init });
-    const texts = new URLSearchParams(init.body.toString()).getAll('text');
-    return new Response(JSON.stringify({ translations: texts.map(t => ({ text: `DE:${t}` })) }));
+  const fetchImpl = async url => {
+    calls.push(url);
+    const q = new URL(url).searchParams.get('q');
+    return new Response(JSON.stringify([[[`DE:${q.slice(0, 5)}`, q.slice(0, 5)], [`|${q.slice(5)}`, q.slice(5)]], null, 'pl']));
   };
   const deals = [
     { source: 'fly4free', title: 'Tanie loty na Maltę', to: 'Malta' },
@@ -146,24 +146,34 @@ test('translateDeals: DeepL übersetzt Titel und Ziel der Fly4free-Angebote', as
     { source: 'fly4free', title: 'x', to: 'y', titleDe: 'schon übersetzt' },
     { title: 'Warsaw to Tokyo', to: 'Tokyo' },
   ];
-  const r = await translateDeals(deals, { deeplKey: 'abc:fx', fetchImpl });
-  assert.deepEqual(r, { translated: 2, via: 'deepl' });
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].url, 'https://api-free.deepl.com/v2/translate');
-  assert.equal(calls[0].init.headers.Authorization, 'DeepL-Auth-Key abc:fx');
-  assert.deepEqual([deals[0].titleDe, deals[0].toDe], ['DE:Tanie loty na Maltę', 'DE:Malta']);
-  assert.deepEqual([deals[1].titleDe, deals[1].toDe], ['DE:Szalona Środa', null]);
+  const r = await translateDeals(deals, { fetchImpl });
+  assert.deepEqual(r, { translated: 2, via: 'google' });
+  assert.equal(calls.length, 3);                   // leeres Ziel wird nicht abgefragt
+  assert.match(calls[0], /^https:\/\/translate\.googleapis\.com\/translate_a\/single\?client=gtx&sl=pl&tl=de&dt=t&q=/);
+  assert.deepEqual([deals[0].titleDe, deals[0].toDe], ['DE:Tanie| loty na Maltę', 'DE:Malta|']);
+  assert.deepEqual([deals[1].titleDe, deals[1].toDe], ['DE:Szalo|na Środa', null]);
   assert.equal(deals[2].titleDe, 'schon übersetzt');
   assert.equal('titleDe' in deals[3], false);
 });
 
-test('translateDeals: ohne Key über MyMemory; mergeDeals behält Übersetzungen', async () => {
+test('translateDeals: fällt Google aus, übernimmt MyMemory; beide weg → Fehler', async () => {
+  const deals = [{ source: 'fly4free', title: 'Cypr', to: null }];
+  const fetchImpl = async url => url.includes('googleapis')
+    ? new Response('Too Many Requests', { status: 429 })
+    : new Response(JSON.stringify({ responseStatus: 200, responseData: { translatedText: 'Zypern' } }));
+  assert.deepEqual(await translateDeals(deals, { fetchImpl }), { translated: 1, via: 'mymemory' });
+  assert.equal(deals[0].titleDe, 'Zypern');
+  await assert.rejects(translateDeals([{ source: 'fly4free', title: 'Cypr' }],
+    { fetchImpl: async () => new Response('', { status: 503 }) }), /Google HTTP 503; MyMemory HTTP 503/);
+});
+
+test('mergeDeals behält Übersetzungen, solange sich der Titel nicht ändert', async () => {
   const fetchImpl = async url => {
     const q = new URL(url).searchParams.get('q');
-    return new Response(JSON.stringify({ responseStatus: 200, responseData: { translatedText: `DE:${q}` } }));
+    return new Response(JSON.stringify([[[`DE:${q}`, q]]]));
   };
   const deals = [{ source: 'fly4free', title: 'Cypr od 183 PLN', to: 'Cypr', link: 'c', date: '2026-10-12', expired: false }];
-  assert.deepEqual(await translateDeals(deals, { fetchImpl }), { translated: 1, via: 'mymemory' });
+  assert.deepEqual(await translateDeals(deals, { fetchImpl }), { translated: 1, via: 'google' });
   assert.equal(deals[0].toDe, 'DE:Cypr');
   const fresh = [{ source: 'fly4free', title: 'Cypr od 183 PLN', to: 'Cypr', link: 'c', date: '2026-10-12', expired: false }];
   const merged = mergeDeals(fresh, deals, { today: '2026-10-14' }).deals;

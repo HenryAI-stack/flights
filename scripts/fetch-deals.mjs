@@ -185,21 +185,23 @@ export function combineFly4free(pageDeals, rssDeals) {
   return out;
 }
 
-/* Polnische Angebote (Fly4free) ins Deutsche übersetzen: DeepL API Free, wenn
-   DEEPL_API_KEY gesetzt ist, sonst MyMemory (ohne Key, ~5000 Zeichen/Tag).
-   Übersetzungen bleiben in deals.json und werden über mergeDeals wiederverwendet. */
+/* Polnische Angebote (Fly4free) ins Deutsche übersetzen – kostenlos und ohne Key:
+   zuerst über den Endpunkt von Google Translate (translate.googleapis.com, client=gtx),
+   fällt der aus, über MyMemory (~5000 Zeichen/Tag). Übersetzungen bleiben in deals.json
+   und werden über mergeDeals wiederverwendet. */
 const TRANSLATE_MAX = 40;    // höchstens so viele Angebote pro Lauf neu übersetzen
 
-async function deepl(texts, key, fetchImpl) {
-  const body = new URLSearchParams({ source_lang: 'PL', target_lang: 'DE' });
-  for (const t of texts) body.append('text', t);
-  const host = /:fx$/.test(key) ? 'api-free.deepl.com' : 'api.deepl.com';
-  const res = await fetchImpl(`https://${host}/v2/translate`, {
-    method: 'POST', body,
-    headers: { Authorization: `DeepL-Auth-Key ${key}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-  });
-  if (!res.ok) throw new Error(`DeepL HTTP ${res.status}`);
-  return (await res.json()).translations.map(t => t.text);
+async function googleGtx(texts, fetchImpl) {
+  const out = [];
+  for (const t of texts) {
+    const res = await fetchImpl(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=pl&tl=de&dt=t&q=${encodeURIComponent(t)}`);
+    if (!res.ok) throw new Error(`Google HTTP ${res.status}`);
+    const j = await res.json();
+    const text = (j?.[0] || []).map(seg => seg?.[0] || '').join('').trim();
+    if (!text) throw new Error('Google: leere Antwort');
+    out.push(text);
+  }
+  return out;
 }
 
 async function myMemory(texts, fetchImpl) {
@@ -214,18 +216,24 @@ async function myMemory(texts, fetchImpl) {
   return out;
 }
 
-export async function translateDeals(deals, { deeplKey = '', fetchImpl = fetch, max = TRANSLATE_MAX } = {}) {
+const TRANSLATORS = [['google', googleGtx], ['mymemory', myMemory]];
+
+export async function translateDeals(deals, { fetchImpl = fetch, max = TRANSLATE_MAX } = {}) {
   const todo = deals.filter(d => d.source === 'fly4free' && !d.titleDe).slice(0, max);
   if (!todo.length) return { translated: 0, via: null };
   const texts = todo.flatMap(d => [d.title, d.to || '']);
-  const via = deeplKey ? 'deepl' : 'mymemory';
   const keep = texts.map((t, i) => [t, i]).filter(([t]) => t);
-  const res = deeplKey ? await deepl(keep.map(([t]) => t), deeplKey, fetchImpl)
-                       : await myMemory(keep.map(([t]) => t), fetchImpl);
-  const tr = [...texts];
-  keep.forEach(([, i], n) => { tr[i] = res[n]; });
-  todo.forEach((d, n) => { d.titleDe = tr[2 * n]; d.toDe = d.to ? tr[2 * n + 1] : null; });
-  return { translated: todo.length, via };
+  const errors = [];
+  for (const [via, translate] of TRANSLATORS) {
+    let res;
+    try { res = await translate(keep.map(([t]) => t), fetchImpl); }
+    catch (e) { errors.push(e.message); continue; }
+    const tr = [...texts];
+    keep.forEach(([, i], n) => { tr[i] = res[n]; });
+    todo.forEach((d, n) => { d.titleDe = tr[2 * n]; d.toDe = d.to ? tr[2 * n + 1] : null; });
+    return { translated: todo.length, via };
+  }
+  throw new Error(errors.join('; '));
 }
 
 const KEEP_DAYS = 90;        // bisherige Deals so lange behalten, auch wenn die Quelle sie gerade nicht liefert
@@ -346,7 +354,7 @@ async function main() {
   const fresh = [...byLink.values()];
   const { deals, kept } = mergeDeals(fresh, previous?.deals);
   try {
-    const t = await translateDeals(deals, { deeplKey: process.env.DEEPL_API_KEY || '' });
+    const t = await translateDeals(deals);
     if (t.translated) console.log(`${t.translated} Angebote übersetzt (${t.via}).`);
   } catch (e) { problems.push(`Übersetzung: ${e.message} – Angebote bleiben vorerst polnisch`); }
   counts.kept = kept;
