@@ -94,6 +94,8 @@ jobs:
           mkdir -p _site
           sed "s#<meta name=\"skysearch-api\" content=\"\" />#<meta name=\"skysearch-api\" content=\"${API_URL%/}\" />#" index.html > _site/index.html
           grep -q "content=\"${API_URL%/}\"" _site/index.html
+          # Kachel-Icon für die cloudplay.at-Startseite (lädt /flights/favicon.ico)
+          cp favicon.ico _site/favicon.ico
       - name: Deals ab Warschau holen (Secret Flying)
         run: node scripts/fetch-deals.mjs _site/deals.json --fallback "${{ steps.pages.outputs.base_url }}/deals.json"
       - uses: actions/upload-pages-artifact@v3
