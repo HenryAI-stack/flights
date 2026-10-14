@@ -103,24 +103,32 @@ test('mergeDeals: Angebote ohne Datum bekommen den Tag des ersten Auftauchens un
   assert.equal(later[0].date, '2026-10-14');
 });
 
-test('Fly4free-Feed liefert Datum; Seite und Feed werden kombiniert', async () => {
+test('Fly4free-Feed liefert Datum; Seite und Feed werden kombiniert, nur Flüge', async () => {
   const { readFile } = await import('node:fs/promises');
   const fx = f => readFile(new URL(`./fixtures/${f}`, import.meta.url), 'utf8');
   const rss = parseFly4freeRss(await fx('fly4free-warszawa-feed.xml'));
   assert.equal(rss.length, 4);
-  assert.deepEqual(rss[0], {
-    title: 'Przedłużony weekend w cieniu Akropolu City break w Atenach za 529 PLN',
-    from: 'Warschau', to: 'Aten', price: '529 PLN', trip: null, date: '2026-10-14',
-    expired: false, link: 'https://www.fly4free.pl/w-cieniu-akropolu-za-529-pln/', source: 'fly4free',
+  assert.deepEqual(rss[2], {
+    title: 'SUPER Majówka w Turcji od 293 PLN Tanie loty Pegasus Airlines',
+    from: 'Warschau', to: 'Ankary', price: 'ab 293 PLN', trip: null, date: '2026-10-14',
+    expired: false, link: 'https://www.fly4free.pl/tanie-loty-pegasus-airlines-do-turcji-od-293-pln/',
+    source: 'fly4free', package: false,
   });
-  assert.equal(rss[2].price, 'ab 293 PLN');
+  assert.equal(rss[0].package, true);             // Kategorie „pakiety“ (Flug + Hotel)
+  assert.equal(rss[1].package, true);             // Kategorie „Wczasy“
   assert.equal(rss[3].to, 'Wyspy Kanaryjskie');
+  assert.equal(rss[3].price, 'ab 281 PLN');
 
   const all = combineFly4free(parseFly4free(await fx('fly4free-warszawa.html')), rss);
-  assert.equal(all.length, 7);                    // 5 von der Seite + 2 nur im Feed
-  const ateny = all.find(d => d.link.includes('akropolu'));
-  assert.equal(ateny.to, 'Ateny');               // Details von der Seite …
-  assert.equal(ateny.date, '2026-10-14');         // … Datum aus dem Feed
-  assert.equal('undated' in ateny, false);
-  assert.equal(all.find(d => d.link.includes('szalona')).undated, true);   // nicht im Feed
+  // Seite: Ateny (pakiety laut Feed), Tunezja + Wietnam (Hotel im Titel) fallen raus;
+  // Turcja (Datum aus Feed) und Szalona Środa bleiben, dazu Kanaren nur aus dem Feed
+  assert.deepEqual(all.map(d => d.link.split('/')[3]), [
+    'tanie-loty-pegasus-airlines-do-turcji-od-293-pln', 'sprawdz-szalona-srode-w-pll-lot-loty-od-449-pln',
+    'wyspy-kanaryjskie-tanie-loty-od-281pln',
+  ]);
+  assert.equal(all[0].to, 'Turcja');              // Details von der Seite …
+  assert.equal(all[0].date, '2026-10-14');        // … Datum aus dem Feed
+  assert.equal('undated' in all[0], false);
+  assert.equal(all[1].undated, true);             // nicht im Feed
+  assert.equal('package' in all[2], false);
 });

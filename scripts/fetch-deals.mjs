@@ -141,6 +141,10 @@ export function parseFly4free(html) {
   return deals;
 }
 
+// Nur Flüge: Pauschalreisen (Kategorien „Wczasy“, „pakiety“ = Flug + Hotel, „Rejsy“ = Kreuzfahrt)
+// fliegen raus. Ohne Feed-Eintrag entscheidet der Titel.
+const F4F_PACKAGE_CATS = /^(wczasy|pakiety|rejsy)$/i;
+const F4F_PACKAGE_TITLE = /all inclusive|hotel|noclegi?\b|wczasy|rejs|wyżywieniem|pakiet/i;
 const F4F_PRICE_RE = /(od\s+)?(\d[\d\s.]*\d|\d)\s*PLN/i;
 
 /* RSS-Feed der Kategorie: Titel, Link, pubDate und Kategorien („do Aten“, „z Warszawy“). */
@@ -159,22 +163,26 @@ export function parseFly4freeRss(xml) {
       price: pm ? `${pm[1] ? 'ab ' : ''}${pm[2].replace(/\s/g, '')} PLN` : null,
       trip: null, date: Number.isNaN(ts) ? null : new Date(ts).toISOString().slice(0, 10),
       expired: false, link, source: 'fly4free',
+      package: cats.some(c => F4F_PACKAGE_CATS.test(c)) || F4F_PACKAGE_TITLE.test(title),
     };
   }).filter(Boolean);
 }
 
-/* Seite (Ziel, Abflugort, Preis, ausverkauft) und Feed (Datum) zusammenführen;
-   Beiträge, die nur im Feed stehen, kommen dazu. */
+/* Seite (Ziel, Abflugort, Preis, ausverkauft) und Feed (Datum, Kategorien) zusammenführen;
+   Beiträge, die nur im Feed stehen, kommen dazu. Pauschalreisen werden ausgelassen. */
 export function combineFly4free(pageDeals, rssDeals) {
   const rss = new Map(rssDeals.map(d => [d.link, d]));
-  const out = pageDeals.map(d => {
+  const out = [];
+  for (const d of pageDeals) {
     const r = rss.get(d.link);
-    if (!r?.date) return d;
+    if (r ? r.package : F4F_PACKAGE_TITLE.test(d.title)) continue;
+    if (!r?.date) { out.push(d); continue; }
     const { undated, ...deal } = d;
-    return { ...deal, date: r.date };
-  });
-  const seen = new Set(out.map(d => d.link));
-  return [...out, ...rssDeals.filter(d => !seen.has(d.link))];
+    out.push({ ...deal, date: r.date });
+  }
+  const seen = new Set(pageDeals.map(d => d.link));
+  for (const { package: pkg, ...d } of rssDeals) if (!pkg && !seen.has(d.link)) out.push(d);
+  return out;
 }
 
 const KEEP_DAYS = 90;        // bisherige Deals so lange behalten, auch wenn die Quelle sie gerade nicht liefert
