@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseRss, parseSearchPage, toDeal, mergeDeals } from '../scripts/fetch-deals.mjs';
+import { parseRss, parseSearchPage, parseFly4free, parseFly4freeRss, combineFly4free, translateDeals, toDeal, mergeDeals } from '../scripts/fetch-deals.mjs';
 
 const RSS = `<?xml version="1.0"?><rss><channel>
 <item><title><![CDATA[Warsaw, Poland to Tokyo, Japan for only €389 roundtrip]]></title>
@@ -75,4 +75,109 @@ test('mergeDeals: alte Deals bleiben, neue Daten gewinnen, zu alte fallen weg', 
 test('mergeDeals: ohne alte Liste und mit Obergrenze', () => {
   const fresh = [1, 2, 3].map(i => ({ link: `l${i}`, date: `2026-10-0${i}`, expired: false }));
   assert.deepEqual(mergeDeals(fresh, undefined, { max: 2 }).deals.map(d => d.link), ['l3', 'l2']);
+});
+
+test('Fly4free (echte Struktur): Angebote, Abfahrtsort, Preis, ausverkauft, Werbung übersprungen', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const html = await readFile(new URL('./fixtures/fly4free-warszawa.html', import.meta.url), 'utf8');
+  const deals = parseFly4free(html);
+  assert.equal(deals.length, 5);               // „Wczytaj więcej“ und Sidebar-Werbung zählen nicht
+  assert.deepEqual(deals[0], {
+    title: 'Przedłużony weekend w cieniu Akropolu City break w Atenach za 529 PLN',
+    from: 'Warschau', to: 'Ateny', price: '529 PLN', trip: null, date: null, undated: true,
+    expired: false, link: 'https://www.fly4free.pl/w-cieniu-akropolu-za-529-pln/', source: 'fly4free',
+  });
+  assert.equal(deals[1].from, 'Krakau');
+  assert.equal(deals[1].price, 'ab 293 PLN');
+  assert.equal(deals[2].title, 'Tunezja z all inclusive za 1981 PLN 4* hotel Skanes Serail & Aquapark');
+  assert.equal(deals[3].from, null);
+  assert.equal(deals[3].to, 'Szalona Środa w PLL LOT');
+  assert.equal(deals[4].expired, true);        // offer--soldout
+});
+
+test('mergeDeals: Angebote ohne Datum bekommen den Tag des ersten Auftauchens und behalten ihn', () => {
+  const fresh = [{ link: 'f1', undated: true, date: null, expired: false }];
+  const first = mergeDeals(fresh, [], { today: '2026-10-14' }).deals;
+  assert.deepEqual(first, [{ link: 'f1', date: '2026-10-14', expired: false }]);
+  const later = mergeDeals(fresh, first, { today: '2026-10-20' }).deals;
+  assert.equal(later[0].date, '2026-10-14');
+});
+
+test('Fly4free-Feed liefert Datum; Seite und Feed werden kombiniert, nur Flüge', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const fx = f => readFile(new URL(`./fixtures/${f}`, import.meta.url), 'utf8');
+  const rss = parseFly4freeRss(await fx('fly4free-warszawa-feed.xml'));
+  assert.equal(rss.length, 4);
+  assert.deepEqual(rss[2], {
+    title: 'SUPER Majówka w Turcji od 293 PLN Tanie loty Pegasus Airlines',
+    from: 'Warschau', to: 'Ankary', price: 'ab 293 PLN', trip: null, date: '2026-10-14',
+    expired: false, link: 'https://www.fly4free.pl/tanie-loty-pegasus-airlines-do-turcji-od-293-pln/',
+    source: 'fly4free', package: false,
+  });
+  assert.equal(rss[0].package, true);             // Kategorie „pakiety“ (Flug + Hotel)
+  assert.equal(rss[1].package, true);             // Kategorie „Wczasy“
+  assert.equal(rss[3].to, 'Wyspy Kanaryjskie');
+  assert.equal(rss[3].price, 'ab 281 PLN');
+
+  const all = combineFly4free(parseFly4free(await fx('fly4free-warszawa.html')), rss);
+  // Seite: Ateny (pakiety laut Feed), Tunezja + Wietnam (Hotel im Titel) fallen raus;
+  // Turcja (Datum aus Feed) und Szalona Środa bleiben, dazu Kanaren nur aus dem Feed
+  assert.deepEqual(all.map(d => d.link.split('/')[3]), [
+    'tanie-loty-pegasus-airlines-do-turcji-od-293-pln', 'sprawdz-szalona-srode-w-pll-lot-loty-od-449-pln',
+    'wyspy-kanaryjskie-tanie-loty-od-281pln',
+  ]);
+  assert.equal(all[0].to, 'Turcja');              // Details von der Seite …
+  assert.equal(all[0].date, '2026-10-14');        // … Datum aus dem Feed
+  assert.equal('undated' in all[0], false);
+  assert.equal(all[1].undated, true);             // nicht im Feed
+  assert.equal('package' in all[2], false);
+});
+
+test('translateDeals: Google übersetzt Titel und Ziel der Fly4free-Angebote', async () => {
+  const calls = [];
+  const fetchImpl = async url => {
+    calls.push(url);
+    const q = new URL(url).searchParams.get('q');
+    return new Response(JSON.stringify([[[`DE:${q.slice(0, 5)}`, q.slice(0, 5)], [`|${q.slice(5)}`, q.slice(5)]], null, 'pl']));
+  };
+  const deals = [
+    { source: 'fly4free', title: 'Tanie loty na Maltę', to: 'Malta' },
+    { source: 'fly4free', title: 'Szalona Środa', to: null },
+    { source: 'fly4free', title: 'x', to: 'y', titleDe: 'schon übersetzt' },
+    { title: 'Warsaw to Tokyo', to: 'Tokyo' },
+  ];
+  const r = await translateDeals(deals, { fetchImpl });
+  assert.deepEqual(r, { translated: 2, via: 'google' });
+  assert.equal(calls.length, 3);                   // leeres Ziel wird nicht abgefragt
+  assert.match(calls[0], /^https:\/\/translate\.googleapis\.com\/translate_a\/single\?client=gtx&sl=pl&tl=de&dt=t&q=/);
+  assert.deepEqual([deals[0].titleDe, deals[0].toDe], ['DE:Tanie| loty na Maltę', 'DE:Malta|']);
+  assert.deepEqual([deals[1].titleDe, deals[1].toDe], ['DE:Szalo|na Środa', null]);
+  assert.equal(deals[2].titleDe, 'schon übersetzt');
+  assert.equal('titleDe' in deals[3], false);
+});
+
+test('translateDeals: fällt Google aus, übernimmt MyMemory; beide weg → Fehler', async () => {
+  const deals = [{ source: 'fly4free', title: 'Cypr', to: null }];
+  const fetchImpl = async url => url.includes('googleapis')
+    ? new Response('Too Many Requests', { status: 429 })
+    : new Response(JSON.stringify({ responseStatus: 200, responseData: { translatedText: 'Zypern' } }));
+  assert.deepEqual(await translateDeals(deals, { fetchImpl }), { translated: 1, via: 'mymemory' });
+  assert.equal(deals[0].titleDe, 'Zypern');
+  await assert.rejects(translateDeals([{ source: 'fly4free', title: 'Cypr' }],
+    { fetchImpl: async () => new Response('', { status: 503 }) }), /Google HTTP 503; MyMemory HTTP 503/);
+});
+
+test('mergeDeals behält Übersetzungen, solange sich der Titel nicht ändert', async () => {
+  const fetchImpl = async url => {
+    const q = new URL(url).searchParams.get('q');
+    return new Response(JSON.stringify([[[`DE:${q}`, q]]]));
+  };
+  const deals = [{ source: 'fly4free', title: 'Cypr od 183 PLN', to: 'Cypr', link: 'c', date: '2026-10-12', expired: false }];
+  assert.deepEqual(await translateDeals(deals, { fetchImpl }), { translated: 1, via: 'google' });
+  assert.equal(deals[0].toDe, 'DE:Cypr');
+  const fresh = [{ source: 'fly4free', title: 'Cypr od 183 PLN', to: 'Cypr', link: 'c', date: '2026-10-12', expired: false }];
+  const merged = mergeDeals(fresh, deals, { today: '2026-10-14' }).deals;
+  assert.equal(merged[0].titleDe, 'DE:Cypr od 183 PLN');
+  const changed = mergeDeals([{ ...fresh[0], title: 'Cypr od 150 PLN' }], deals, { today: '2026-10-14' }).deals;
+  assert.equal('titleDe' in changed[0], false);   // Titel geändert → neu übersetzen
 });

@@ -1,6 +1,6 @@
-// Holt Flug-Deals ab Warschau von Secret Flying und schreibt sie als JSON.
+// Holt Flug-Deals ab Warschau von Secret Flying und Fly4free.pl und schreibt sie als JSON.
 // Läuft täglich in .github/workflows/deploy.yml; die Seite zeigt deals.json an
-// und verlinkt jeden Deal zurück auf Secret Flying.
+// und verlinkt jeden Deal zurück auf die Quelle.
 //
 // Aufruf: node scripts/fetch-deals.mjs <ausgabe.json> [--fallback <url der alten deals.json>]
 // Die alte Liste wird mit den neuen Deals zusammengeführt (siehe mergeDeals).
@@ -8,12 +8,17 @@
 const CITY        = 'Warsaw';
 const RSS_URL     = `https://www.secretflying.com/?s=${CITY}&feed=rss2`;
 const SEARCH_URL  = `https://www.secretflying.com/search2/?cityFrom=${CITY}&month=&showOldDeals=on&cityTo=`;
-const MAX_DEALS   = 60;
+const MAX_DEALS   = 100;
 const RSS_PAGES   = 8;       // WordPress liefert je Feed-Seite ~10 Suchtreffer
 const SEARCH_PAGES = 6;      // Suchseite: ~10 Deals je Seite (inkl. alter Deals)
 // Folgeseiten genau im Format, das die Seite selbst nachlädt (snews_alp.nextLink)
 const searchPageUrl = n => n === 1 ? SEARCH_URL
   : `https://www.secretflying.com/search2/page/${n}/?cityFrom=${CITY}&month&showOldDeals=on&cityTo`;
+const F4F_URL     = 'https://www.fly4free.pl/tanie-loty/z-warszawy/';
+const F4F_PAGES   = 3;       // ~22 Angebote je Seite
+const f4fPageUrl  = n => n === 1 ? F4F_URL : `${F4F_URL}page/${n}/`;
+const F4F_RSS_PAGES = 3;     // ~20 Beiträge je Feed-Seite, liefert das Veröffentlichungsdatum
+const f4fRssUrl   = n => `${F4F_URL}feed/${n > 1 ? `?paged=${n}` : ''}`;
 const PAGE_DELAY_MS = 4000;  // Abstand zwischen Seitenabrufen, sonst antwortet die Seite mit 403
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const USER_AGENT  = 'Mozilla/5.0 (compatible; SkySearchDeals/1.0; +https://henryai-stack.github.io/flights/)';
@@ -99,6 +104,138 @@ export function parseSearchPage(html) {
   return deals;
 }
 
+/* Fly4free.pl, Kategorie „z Warszawy“: jedes Angebot ist ein
+   <a href="…" class="js-stats-count offer [offer--soldout]" data-pid="…"> mit
+   <span class="offer__description">Ateny z&nbsp;Warszawy</span>, <span class="offer__price">529 PLN</span>
+   und <h2 class="offer__title">…</h2>. Die Liste hat kein Datum – das kommt aus dem
+   RSS-Feed (combineFly4free), sonst gilt der Tag des ersten Auftauchens (undated, siehe mergeDeals). */
+const F4F_FROM = [
+  [/^Warszawy$/i, 'Warschau'], [/^Krakowa$/i, 'Krakau'], [/^Polski$/i, 'Polen'], [/^Gdańska$/i, 'Danzig'],
+  [/^Katowic$/i, 'Kattowitz'], [/^Wrocławia$/i, 'Breslau'], [/^Poznania$/i, 'Posen'], [/^Łodzi$/i, 'Lodz'],
+  [/^(\d+) miast$/i, '$1 Städten'],
+];
+const stripEmoji = s => s.replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\uFE0F\u200D]/gu, '')
+  .replace(/^[^\p{L}\d]+/u, '').replace(/\s+/g, ' ').trim();
+
+export function parseFly4free(html) {
+  const deals = [];
+  for (const [, attrs, body] of String(html).matchAll(/<a\b([^>]*class="[^"]*\boffer\b[^"]*"[^>]*)>([\s\S]*?)<\/a>/gi)) {
+    const link = attrs.match(/href="([^"]+)"/)?.[1];
+    if (!link || !/^https:\/\/www\.fly4free\.pl\//.test(link)) continue;
+    const span = c => decode(body.match(new RegExp(`<span\\b[^>]*class="[^"]*\\b${c}\\b[^"]*"[^>]*>([\\s\\S]*?)<\/span>`, 'i'))?.[1]);
+    const title = stripEmoji(decode(body.match(/<h2\b[^>]*>([\s\S]*?)<\/h2>/i)?.[1]
+      || body.match(/<img\b[^>]*alt="([^"]*)"/i)?.[1]));
+    if (!title) continue;
+    const desc = span('offer__description');
+    const m = desc.match(/^(.*\S)\s+z\s+(.+)$/);
+    const fromPl = m?.[2].trim();
+    const from = fromPl ? F4F_FROM.reduce((f, [re, de]) => re.test(f) ? f.replace(re, de) : f, fromPl) : null;
+    deals.push({
+      title, from, to: m ? m[1] : desc || null,
+      price: span('offer__price').replace(/^od\s+/i, 'ab ') || null,
+      trip: null, date: null, undated: true,
+      expired: /\boffer--soldout\b/.test(attrs),
+      link, source: 'fly4free',
+    });
+  }
+  return deals;
+}
+
+// Nur Flüge: Pauschalreisen (Kategorien „Wczasy“, „pakiety“ = Flug + Hotel, „Rejsy“ = Kreuzfahrt)
+// fliegen raus. Ohne Feed-Eintrag entscheidet der Titel.
+const F4F_PACKAGE_CATS = /^(wczasy|pakiety|rejsy)$/i;
+const F4F_PACKAGE_TITLE = /all inclusive|hotel|noclegi?\b|wczasy|rejs|wyżywieniem|pakiet/i;
+const F4F_PRICE_RE = /(od\s+)?(\d[\d\s.]*\d|\d)\s*PLN/i;
+
+/* RSS-Feed der Kategorie: Titel, Link, pubDate und Kategorien („do Aten“, „z Warszawy“). */
+export function parseFly4freeRss(xml) {
+  return [...String(xml).matchAll(/<item\b[\s\S]*?<\/item>/gi)].map(([it]) => {
+    const tag = t => decode(it.match(new RegExp(`<${t}\\b[^>]*>([\\s\\S]*?)</${t}>`, 'i'))?.[1]);
+    const cats = [...it.matchAll(/<category\b[^>]*>([\s\S]*?)<\/category>/gi)].map(c => decode(c[1]));
+    const title = stripEmoji(tag('title'));
+    const link = tag('link');
+    if (!title || !/^https:\/\/www\.fly4free\.pl\//.test(link)) return null;
+    const ts = Date.parse(tag('pubDate'));
+    const pm = title.match(F4F_PRICE_RE);
+    return {
+      title, from: cats.some(c => /^z Warszawy$/i.test(c)) ? 'Warschau' : null,
+      to: cats.find(c => /^(do|na)\s/i.test(c))?.replace(/^(do|na)\s+/i, '') || null,
+      price: pm ? `${pm[1] ? 'ab ' : ''}${pm[2].replace(/\s/g, '')} PLN` : null,
+      trip: null, date: Number.isNaN(ts) ? null : new Date(ts).toISOString().slice(0, 10),
+      expired: false, link, source: 'fly4free',
+      package: cats.some(c => F4F_PACKAGE_CATS.test(c)) || F4F_PACKAGE_TITLE.test(title),
+    };
+  }).filter(Boolean);
+}
+
+/* Seite (Ziel, Abflugort, Preis, ausverkauft) und Feed (Datum, Kategorien) zusammenführen;
+   Beiträge, die nur im Feed stehen, kommen dazu. Pauschalreisen werden ausgelassen. */
+export function combineFly4free(pageDeals, rssDeals) {
+  const rss = new Map(rssDeals.map(d => [d.link, d]));
+  const out = [];
+  for (const d of pageDeals) {
+    const r = rss.get(d.link);
+    if (r ? r.package : F4F_PACKAGE_TITLE.test(d.title)) continue;
+    if (!r?.date) { out.push(d); continue; }
+    const { undated, ...deal } = d;
+    out.push({ ...deal, date: r.date });
+  }
+  const seen = new Set(pageDeals.map(d => d.link));
+  for (const { package: pkg, ...d } of rssDeals) if (!pkg && !seen.has(d.link)) out.push(d);
+  return out;
+}
+
+/* Polnische Angebote (Fly4free) ins Deutsche übersetzen – kostenlos und ohne Key:
+   zuerst über den Endpunkt von Google Translate (translate.googleapis.com, client=gtx),
+   fällt der aus, über MyMemory (~5000 Zeichen/Tag). Übersetzungen bleiben in deals.json
+   und werden über mergeDeals wiederverwendet. */
+const TRANSLATE_MAX = 40;    // höchstens so viele Angebote pro Lauf neu übersetzen
+
+async function googleGtx(texts, fetchImpl) {
+  const out = [];
+  for (const t of texts) {
+    const res = await fetchImpl(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=pl&tl=de&dt=t&q=${encodeURIComponent(t)}`);
+    if (!res.ok) throw new Error(`Google HTTP ${res.status}`);
+    const j = await res.json();
+    const text = (j?.[0] || []).map(seg => seg?.[0] || '').join('').trim();
+    if (!text) throw new Error('Google: leere Antwort');
+    out.push(text);
+  }
+  return out;
+}
+
+async function myMemory(texts, fetchImpl) {
+  const out = [];
+  for (const t of texts) {
+    const res = await fetchImpl(`https://api.mymemory.translated.net/get?langpair=pl|de&q=${encodeURIComponent(t)}`);
+    if (!res.ok) throw new Error(`MyMemory HTTP ${res.status}`);
+    const j = await res.json();
+    if (j.responseStatus !== 200 && j.responseStatus !== '200') throw new Error(`MyMemory: ${j.responseDetails || j.responseStatus}`);
+    out.push(decode(j.responseData?.translatedText) || t);
+  }
+  return out;
+}
+
+const TRANSLATORS = [['google', googleGtx], ['mymemory', myMemory]];
+
+export async function translateDeals(deals, { fetchImpl = fetch, max = TRANSLATE_MAX } = {}) {
+  const todo = deals.filter(d => d.source === 'fly4free' && !d.titleDe).slice(0, max);
+  if (!todo.length) return { translated: 0, via: null };
+  const texts = todo.flatMap(d => [d.title, d.to || '']);
+  const keep = texts.map((t, i) => [t, i]).filter(([t]) => t);
+  const errors = [];
+  for (const [via, translate] of TRANSLATORS) {
+    let res;
+    try { res = await translate(keep.map(([t]) => t), fetchImpl); }
+    catch (e) { errors.push(e.message); continue; }
+    const tr = [...texts];
+    keep.forEach(([, i], n) => { tr[i] = res[n]; });
+    todo.forEach((d, n) => { d.titleDe = tr[2 * n]; d.toDe = d.to ? tr[2 * n + 1] : null; });
+    return { translated: todo.length, via };
+  }
+  throw new Error(errors.join('; '));
+}
+
 const KEEP_DAYS = 90;        // bisherige Deals so lange behalten, auch wenn die Quelle sie gerade nicht liefert
 const byDate = (a, b) => (a.expired - b.expired) || String(b.date || '').localeCompare(String(a.date || ''));
 
@@ -111,7 +248,10 @@ export function mergeDeals(fresh, previous = [], { today = new Date().toISOStrin
   const byLink = new Map();
   for (const d of fresh) {
     const prev = old.get(d.link);
-    byLink.set(d.link, prev ? { ...d, date: d.date || prev.date || null } : d);
+    const { undated, ...deal } = d;
+    deal.date = d.date || prev?.date || (undated ? today : null);   // ohne Datum: Tag des ersten Auftauchens
+    if (prev?.titleDe && prev.title === d.title) Object.assign(deal, { titleDe: prev.titleDe, toDe: prev.toDe ?? null });
+    byLink.set(d.link, deal);
   }
   let kept = 0;
   for (const [link, d] of old) {
@@ -173,7 +313,38 @@ async function main() {
     }
   }
 
-  // 3) Bisher veröffentlichte Liste einlesen und zusammenführen
+  // 3) Fly4free.pl, Kategorie „z Warszawy“: Seite (Details) + RSS-Feed (Datum)
+  const f4fPage = [], f4fRss = [];
+  for (let page = 1; page <= F4F_PAGES; page++) {
+    try {
+      await sleep(page > 1 ? PAGE_DELAY_MS : 1000);
+      const html = await get(f4fPageUrl(page), page > 1 ? f4fPageUrl(page - 1) : null);
+      const found = parseFly4free(html);
+      console.log(`Fly4free Seite ${page}: ${html.length} Zeichen, ${found.length} Angebote`);
+      f4fPage.push(...found);
+      if (!found.length) break;
+    } catch (e) {
+      console.log(`Fly4free Seite ${page}: ${e.message} – Ende`);
+      break;
+    }
+  }
+  for (let page = 1; page <= F4F_RSS_PAGES; page++) {
+    try {
+      await sleep(PAGE_DELAY_MS);
+      const found = parseFly4freeRss(await get(f4fRssUrl(page)));
+      console.log(`Fly4free RSS Seite ${page}: ${found.length} Beiträge`);
+      f4fRss.push(...found);
+      if (!found.length) break;
+    } catch (e) {
+      console.log(`Fly4free RSS Seite ${page}: ${e.message} – Ende`);
+      break;
+    }
+  }
+  if (!f4fPage.length && !f4fRss.length) problems.push('fly4free: weder Seite noch Feed lieferten Angebote');
+  counts.fly4free = 0;
+  for (const d of combineFly4free(f4fPage, f4fRss)) if (!byLink.has(d.link)) { byLink.set(d.link, d); counts.fly4free++; }
+
+  // 4) Bisher veröffentlichte Liste einlesen und zusammenführen
   let previous = null;
   if (flag === '--fallback' && fallbackUrl) {
     try { previous = JSON.parse(await get(fallbackUrl)); }
@@ -182,6 +353,10 @@ async function main() {
 
   const fresh = [...byLink.values()];
   const { deals, kept } = mergeDeals(fresh, previous?.deals);
+  try {
+    const t = await translateDeals(deals);
+    if (t.translated) console.log(`${t.translated} Angebote übersetzt (${t.via}).`);
+  } catch (e) { problems.push(`Übersetzung: ${e.message} – Angebote bleiben vorerst polnisch`); }
   counts.kept = kept;
   const source = Object.entries(counts).filter(([, n]) => n).map(([k, n]) => `${k}:${n}`).join(', ') || null;
 

@@ -96,7 +96,7 @@ jobs:
           grep -q "content=\"${API_URL%/}\"" _site/index.html
           # Kachel-Icon für die cloudplay.at-Startseite (lädt /flights/favicon.ico)
           cp favicon.ico _site/favicon.ico
-      - name: Deals ab Warschau holen (Secret Flying)
+      - name: Deals ab Warschau holen (Secret Flying, Fly4free)
         run: node scripts/fetch-deals.mjs _site/deals.json --fallback "${{ steps.pages.outputs.base_url }}/deals.json"
       - uses: actions/upload-pages-artifact@v3
         with:
