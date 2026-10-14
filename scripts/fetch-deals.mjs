@@ -17,6 +17,8 @@ const searchPageUrl = n => n === 1 ? SEARCH_URL
 const F4F_URL     = 'https://www.fly4free.pl/tanie-loty/z-warszawy/';
 const F4F_PAGES   = 3;       // ~22 Angebote je Seite
 const f4fPageUrl  = n => n === 1 ? F4F_URL : `${F4F_URL}page/${n}/`;
+const F4F_RSS_PAGES = 3;     // ~20 Beiträge je Feed-Seite, liefert das Veröffentlichungsdatum
+const f4fRssUrl   = n => `${F4F_URL}feed/${n > 1 ? `?paged=${n}` : ''}`;
 const PAGE_DELAY_MS = 4000;  // Abstand zwischen Seitenabrufen, sonst antwortet die Seite mit 403
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const USER_AGENT  = 'Mozilla/5.0 (compatible; SkySearchDeals/1.0; +https://henryai-stack.github.io/flights/)';
@@ -105,8 +107,8 @@ export function parseSearchPage(html) {
 /* Fly4free.pl, Kategorie „z Warszawy“: jedes Angebot ist ein
    <a href="…" class="js-stats-count offer [offer--soldout]" data-pid="…"> mit
    <span class="offer__description">Ateny z&nbsp;Warszawy</span>, <span class="offer__price">529 PLN</span>
-   und <h2 class="offer__title">…</h2>. Die Liste hat kein Datum – es wird beim
-   ersten Auftauchen gesetzt (undated, siehe mergeDeals). */
+   und <h2 class="offer__title">…</h2>. Die Liste hat kein Datum – das kommt aus dem
+   RSS-Feed (combineFly4free), sonst gilt der Tag des ersten Auftauchens (undated, siehe mergeDeals). */
 const F4F_FROM = [
   [/^Warszawy$/i, 'Warschau'], [/^Krakowa$/i, 'Krakau'], [/^Polski$/i, 'Polen'], [/^Gdańska$/i, 'Danzig'],
   [/^Katowic$/i, 'Kattowitz'], [/^Wrocławia$/i, 'Breslau'], [/^Poznania$/i, 'Posen'], [/^Łodzi$/i, 'Lodz'],
@@ -137,6 +139,42 @@ export function parseFly4free(html) {
     });
   }
   return deals;
+}
+
+const F4F_PRICE_RE = /(od\s+)?(\d[\d\s.]*\d|\d)\s*PLN/i;
+
+/* RSS-Feed der Kategorie: Titel, Link, pubDate und Kategorien („do Aten“, „z Warszawy“). */
+export function parseFly4freeRss(xml) {
+  return [...String(xml).matchAll(/<item\b[\s\S]*?<\/item>/gi)].map(([it]) => {
+    const tag = t => decode(it.match(new RegExp(`<${t}\\b[^>]*>([\\s\\S]*?)</${t}>`, 'i'))?.[1]);
+    const cats = [...it.matchAll(/<category\b[^>]*>([\s\S]*?)<\/category>/gi)].map(c => decode(c[1]));
+    const title = stripEmoji(tag('title'));
+    const link = tag('link');
+    if (!title || !/^https:\/\/www\.fly4free\.pl\//.test(link)) return null;
+    const ts = Date.parse(tag('pubDate'));
+    const pm = title.match(F4F_PRICE_RE);
+    return {
+      title, from: cats.some(c => /^z Warszawy$/i.test(c)) ? 'Warschau' : null,
+      to: cats.find(c => /^(do|na)\s/i.test(c))?.replace(/^(do|na)\s+/i, '') || null,
+      price: pm ? `${pm[1] ? 'ab ' : ''}${pm[2].replace(/\s/g, '')} PLN` : null,
+      trip: null, date: Number.isNaN(ts) ? null : new Date(ts).toISOString().slice(0, 10),
+      expired: false, link, source: 'fly4free',
+    };
+  }).filter(Boolean);
+}
+
+/* Seite (Ziel, Abflugort, Preis, ausverkauft) und Feed (Datum) zusammenführen;
+   Beiträge, die nur im Feed stehen, kommen dazu. */
+export function combineFly4free(pageDeals, rssDeals) {
+  const rss = new Map(rssDeals.map(d => [d.link, d]));
+  const out = pageDeals.map(d => {
+    const r = rss.get(d.link);
+    if (!r?.date) return d;
+    const { undated, ...deal } = d;
+    return { ...deal, date: r.date };
+  });
+  const seen = new Set(out.map(d => d.link));
+  return [...out, ...rssDeals.filter(d => !seen.has(d.link))];
 }
 
 const KEEP_DAYS = 90;        // bisherige Deals so lange behalten, auch wenn die Quelle sie gerade nicht liefert
@@ -215,23 +253,36 @@ async function main() {
     }
   }
 
-  // 3) Fly4free.pl, Kategorie „z Warszawy“
-  counts.fly4free = 0;
+  // 3) Fly4free.pl, Kategorie „z Warszawy“: Seite (Details) + RSS-Feed (Datum)
+  const f4fPage = [], f4fRss = [];
   for (let page = 1; page <= F4F_PAGES; page++) {
     try {
       await sleep(page > 1 ? PAGE_DELAY_MS : 1000);
       const html = await get(f4fPageUrl(page), page > 1 ? f4fPageUrl(page - 1) : null);
       const found = parseFly4free(html);
       console.log(`Fly4free Seite ${page}: ${html.length} Zeichen, ${found.length} Angebote`);
-      if (page === 1 && !found.length) problems.push('fly4free: keine Angebote im HTML gefunden');
-      for (const d of found) if (!byLink.has(d.link)) { byLink.set(d.link, d); counts.fly4free++; }
+      f4fPage.push(...found);
       if (!found.length) break;
     } catch (e) {
-      if (page === 1) problems.push(`fly4free: ${e.message}`);
-      else console.log(`Fly4free Seite ${page}: ${e.message} – Ende`);
+      console.log(`Fly4free Seite ${page}: ${e.message} – Ende`);
       break;
     }
   }
+  for (let page = 1; page <= F4F_RSS_PAGES; page++) {
+    try {
+      await sleep(PAGE_DELAY_MS);
+      const found = parseFly4freeRss(await get(f4fRssUrl(page)));
+      console.log(`Fly4free RSS Seite ${page}: ${found.length} Beiträge`);
+      f4fRss.push(...found);
+      if (!found.length) break;
+    } catch (e) {
+      console.log(`Fly4free RSS Seite ${page}: ${e.message} – Ende`);
+      break;
+    }
+  }
+  if (!f4fPage.length && !f4fRss.length) problems.push('fly4free: weder Seite noch Feed lieferten Angebote');
+  counts.fly4free = 0;
+  for (const d of combineFly4free(f4fPage, f4fRss)) if (!byLink.has(d.link)) { byLink.set(d.link, d); counts.fly4free++; }
 
   // 4) Bisher veröffentlichte Liste einlesen und zusammenführen
   let previous = null;

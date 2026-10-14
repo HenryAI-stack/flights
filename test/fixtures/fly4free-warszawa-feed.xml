@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	>
+<!-- Ausschnitt aus https://www.fly4free.pl/tanie-loty/z-warszawy/feed/ (Stand 14.10.2026), Kategorien gekürzt -->
+<channel>
+	<title>z Warszawy &#8211; Fly4free.pl &#8211; tanie loty, wczasy, hotele</title>
+	<atom:link href="https://www.fly4free.pl/tanie-loty/z-warszawy/feed/" rel="self" type="application/rss+xml" />
+	<link>https://www.fly4free.pl</link>
+	<item>
+		<title>✨Przedłużony weekend w cieniu Akropolu 🤩🏛️ City break w Atenach za 529 PLN 🤍💙</title>
+		<link>https://www.fly4free.pl/w-cieniu-akropolu-za-529-pln/</link>
+		<dc:creator><![CDATA[Mateusz Subzda]]></dc:creator>
+		<pubDate>Wed, 14 Oct 2026 16:14:00 +0000</pubDate>
+				<category><![CDATA[Ciekawe]]></category>
+		<category><![CDATA[Citybreak]]></category>
+		<category><![CDATA[do Aten]]></category>
+		<category><![CDATA[do Grecji]]></category>
+		<category><![CDATA[z Modlina]]></category>
+		<category><![CDATA[z Polski]]></category>
+		<category><![CDATA[z Warszawy]]></category>
+		<guid isPermaLink="false">https://www.fly4free.pl/?p=1299125</guid>
+					<description><![CDATA[Ateny to idealny kierunek na przedłużony weekend 🇬🇷✨]]></description>
+	</item>
+	<item>
+		<title>Fuerteventura za 2699 PLN ☀️ All inclusive w 4* hotelu LIVVO Jandía Golf</title>
+		<link>https://www.fly4free.pl/all-inclusive-na-fuerteventurze-za-2699-pln-6/</link>
+		<dc:creator><![CDATA[Kamil Walinowicz]]></dc:creator>
+		<pubDate>Wed, 14 Oct 2026 15:50:00 +0000</pubDate>
+				<category><![CDATA[Ciekawe]]></category>
+		<category><![CDATA[do Hiszpanii]]></category>
+		<category><![CDATA[grudzień]]></category>
+		<category><![CDATA[na Fuerteventurę]]></category>
+		<category><![CDATA[Wczasy]]></category>
+		<category><![CDATA[z Polski]]></category>
+		<category><![CDATA[z Warszawy]]></category>
+		<guid isPermaLink="false">https://www.fly4free.pl/?p=1299085</guid>
+					<description><![CDATA[Tydzień na Fuerteventurze w 4* hotelu ☀️.]]></description>
+	</item>
+	<item>
+		<title>SUPER ❗️Majówka w Turcji od 293 PLN 🔥 Tanie loty Pegasus Airlines ✈️</title>
+		<link>https://www.fly4free.pl/tanie-loty-pegasus-airlines-do-turcji-od-293-pln/</link>
+		<dc:creator><![CDATA[Szymon Kuś]]></dc:creator>
+		<pubDate>Wed, 14 Oct 2026 14:22:05 +0000</pubDate>
+				<category><![CDATA[Ciekawe]]></category>
+		<category><![CDATA[czerwiec]]></category>
+		<category><![CDATA[do Ankary]]></category>
+		<category><![CDATA[do Turcji]]></category>
+		<category><![CDATA[z Krakowa]]></category>
+		<category><![CDATA[z Polski]]></category>
+		<category><![CDATA[z Warszawy]]></category>
+		<guid isPermaLink="false">https://www.fly4free.pl/?p=1299104</guid>
+					<description><![CDATA[Zarezerwuj loty do Turcji już od 293 PLN 🔥]]></description>
+	</item>
+	<item>
+		<title>Wyspy Kanaryjskie tanio &#8211; od 281 PLN! 🔥😎 Gran Canaria, Fuerteventura i Teneryfa ✈️🏝️</title>
+		<link>https://www.fly4free.pl/wyspy-kanaryjskie-tanie-loty-od-281pln/</link>
+		<pubDate>Wed, 14 Oct 2026 07:30:00 +0000</pubDate>
+		<category><![CDATA[Loty]]></category>
+		<category><![CDATA[na Wyspy Kanaryjskie]]></category>
+		<category><![CDATA[z Warszawy]]></category>
+		<guid isPermaLink="false">https://www.fly4free.pl/?p=1298892</guid>
+	</item>
+</channel>
+</rss>

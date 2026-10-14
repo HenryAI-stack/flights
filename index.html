@@ -1848,7 +1848,7 @@ function dealCard(d, old){
       <div class="deal-meta">ab ${esc(d.from||'Warschau')}${d.trip?` · ${trip[d.trip]}`:''}</div>
       ${d.price?`<div class="deal-price">${esc(d.price)}</div>`:''}
       ${f4f?`<div class="deal-meta deal-title">${esc(d.title)}</div>`:''}
-      <div class="deal-meta">${d.date?`${f4f?'entdeckt':'veröffentlicht'} ${esc(isoToDE(d.date))}`:''}</div>
+      <div class="deal-meta">${d.date?`veröffentlicht ${esc(isoToDE(d.date))}`:''}</div>
       <a href="${esc(d.link)}" target="_blank" rel="noopener">Zum Deal auf ${f4f?'Fly4free.pl':'Secret Flying'} ↗</a>
     </div>`;
 }

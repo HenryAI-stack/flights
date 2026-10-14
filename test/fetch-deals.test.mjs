@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseRss, parseSearchPage, parseFly4free, toDeal, mergeDeals } from '../scripts/fetch-deals.mjs';
+import { parseRss, parseSearchPage, parseFly4free, parseFly4freeRss, combineFly4free, toDeal, mergeDeals } from '../scripts/fetch-deals.mjs';
 
 const RSS = `<?xml version="1.0"?><rss><channel>
 <item><title><![CDATA[Warsaw, Poland to Tokyo, Japan for only €389 roundtrip]]></title>
@@ -101,4 +101,26 @@ test('mergeDeals: Angebote ohne Datum bekommen den Tag des ersten Auftauchens un
   assert.deepEqual(first, [{ link: 'f1', date: '2026-10-14', expired: false }]);
   const later = mergeDeals(fresh, first, { today: '2026-10-20' }).deals;
   assert.equal(later[0].date, '2026-10-14');
+});
+
+test('Fly4free-Feed liefert Datum; Seite und Feed werden kombiniert', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const fx = f => readFile(new URL(`./fixtures/${f}`, import.meta.url), 'utf8');
+  const rss = parseFly4freeRss(await fx('fly4free-warszawa-feed.xml'));
+  assert.equal(rss.length, 4);
+  assert.deepEqual(rss[0], {
+    title: 'Przedłużony weekend w cieniu Akropolu City break w Atenach za 529 PLN',
+    from: 'Warschau', to: 'Aten', price: '529 PLN', trip: null, date: '2026-10-14',
+    expired: false, link: 'https://www.fly4free.pl/w-cieniu-akropolu-za-529-pln/', source: 'fly4free',
+  });
+  assert.equal(rss[2].price, 'ab 293 PLN');
+  assert.equal(rss[3].to, 'Wyspy Kanaryjskie');
+
+  const all = combineFly4free(parseFly4free(await fx('fly4free-warszawa.html')), rss);
+  assert.equal(all.length, 7);                    // 5 von der Seite + 2 nur im Feed
+  const ateny = all.find(d => d.link.includes('akropolu'));
+  assert.equal(ateny.to, 'Ateny');               // Details von der Seite …
+  assert.equal(ateny.date, '2026-10-14');         // … Datum aus dem Feed
+  assert.equal('undated' in ateny, false);
+  assert.equal(all.find(d => d.link.includes('szalona')).undated, true);   // nicht im Feed
 });
