@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseRss, parseSearchPage, toDeal, mergeDeals } from '../scripts/fetch-deals.mjs';
+import { parseRss, parseSearchPage, parseFly4free, toDeal, mergeDeals } from '../scripts/fetch-deals.mjs';
 
 const RSS = `<?xml version="1.0"?><rss><channel>
 <item><title><![CDATA[Warsaw, Poland to Tokyo, Japan for only €389 roundtrip]]></title>
@@ -75,4 +75,30 @@ test('mergeDeals: alte Deals bleiben, neue Daten gewinnen, zu alte fallen weg', 
 test('mergeDeals: ohne alte Liste und mit Obergrenze', () => {
   const fresh = [1, 2, 3].map(i => ({ link: `l${i}`, date: `2026-10-0${i}`, expired: false }));
   assert.deepEqual(mergeDeals(fresh, undefined, { max: 2 }).deals.map(d => d.link), ['l3', 'l2']);
+});
+
+test('Fly4free (echte Struktur): Angebote, Abfahrtsort, Preis, ausverkauft, Werbung übersprungen', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const html = await readFile(new URL('./fixtures/fly4free-warszawa.html', import.meta.url), 'utf8');
+  const deals = parseFly4free(html);
+  assert.equal(deals.length, 5);               // „Wczytaj więcej“ und Sidebar-Werbung zählen nicht
+  assert.deepEqual(deals[0], {
+    title: 'Przedłużony weekend w cieniu Akropolu City break w Atenach za 529 PLN',
+    from: 'Warschau', to: 'Ateny', price: '529 PLN', trip: null, date: null, undated: true,
+    expired: false, link: 'https://www.fly4free.pl/w-cieniu-akropolu-za-529-pln/', source: 'fly4free',
+  });
+  assert.equal(deals[1].from, 'Krakau');
+  assert.equal(deals[1].price, 'ab 293 PLN');
+  assert.equal(deals[2].title, 'Tunezja z all inclusive za 1981 PLN 4* hotel Skanes Serail & Aquapark');
+  assert.equal(deals[3].from, null);
+  assert.equal(deals[3].to, 'Szalona Środa w PLL LOT');
+  assert.equal(deals[4].expired, true);        // offer--soldout
+});
+
+test('mergeDeals: Angebote ohne Datum bekommen den Tag des ersten Auftauchens und behalten ihn', () => {
+  const fresh = [{ link: 'f1', undated: true, date: null, expired: false }];
+  const first = mergeDeals(fresh, [], { today: '2026-10-14' }).deals;
+  assert.deepEqual(first, [{ link: 'f1', date: '2026-10-14', expired: false }]);
+  const later = mergeDeals(fresh, first, { today: '2026-10-20' }).deals;
+  assert.equal(later[0].date, '2026-10-14');
 });
