@@ -328,6 +328,11 @@
     .deal a:hover{text-decoration:underline}
     .deals-more{display:block;width:100%;margin-top:10px;padding:9px;background:var(--surface);border:.5px solid var(--border-med);border-radius:var(--r);font-size:13px;font-weight:600;color:var(--sky);cursor:pointer}
     .deals-more:hover{background:var(--sky-light)}
+    .deals-src+.deals-src{margin-top:22px}
+    .deals-src-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:14px;font-weight:600;margin-bottom:8px}
+    .deals-src-head a{font-size:12px;font-weight:600;color:var(--sky);text-decoration:none}
+    .deals-src-head a:hover{text-decoration:underline}
+    .deals-count{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:10px;background:var(--surface-2);color:var(--text-2);font-size:11px;text-align:center}
     .deals-sub{font-size:13px;font-weight:600;color:var(--text-2);margin:16px 0 8px}
     .deals-foot{font-size:12px;color:var(--text-3);margin-top:10px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
     .deals-foot a{color:var(--sky)}
@@ -1836,7 +1841,7 @@ async function loadDeals(){
   }catch{}
 }
 const DEALS_VISIBLE=10, DEALS_MAX_AGE_DAYS=42;   // 6 Wochen
-let dealsExpanded=false;
+let dealsExpanded={secretflying:false, fly4free:false};
 // Abgelaufen: von Secret Flying markiert oder älter als 6 Wochen
 const dealExpired=d=>d.expired||(d.date&&isoDiff(d.date,new Date().toISOString().slice(0,10))>DEALS_MAX_AGE_DAYS);
 
@@ -1853,30 +1858,52 @@ function dealCard(d, old){
     </div>`;
 }
 
-function renderDeals(){
-  if(!DEALS?.deals?.length){ $('deals').style.display='none'; return; }
-  const byDate=(a,b)=>String(b.date||'').localeCompare(String(a.date||''));
-  const current=DEALS.deals.filter(d=>!dealExpired(d)).sort(byDate);
-  const old=DEALS.deals.filter(dealExpired).sort(byDate);
-  const shown=dealsExpanded?current:current.slice(0,DEALS_VISIBLE);
-  const hidden=current.length-shown.length;
+// Getrennte Listen je Quelle: zuerst Secret Flying, danach Fly4free
+const DEAL_SOURCES=[
+  {key:'secretflying', name:'Secret Flying', url:d=>d.searchUrl||'https://www.secretflying.com/'},
+  {key:'fly4free', name:'Fly4free.pl', url:()=>'https://www.fly4free.pl/tanie-loty/z-warszawy/'},
+];
+const dealSource=d=>d.source==='fly4free'?'fly4free':'secretflying';
 
-  let html=current.length
+function dealSection(src, deals, showOld){
+  const byDate=(a,b)=>String(b.date||'').localeCompare(String(a.date||''));
+  const current=deals.filter(d=>!dealExpired(d)).sort(byDate);
+  const old=deals.filter(dealExpired).sort(byDate);
+  const expanded=dealsExpanded[src.key];
+  const shown=expanded?current:current.slice(0,DEALS_VISIBLE);
+  const hidden=current.length-shown.length;
+  let html=`<div class="deals-src" id="deals-${src.key}">
+    <h4 class="deals-src-head"><span>${esc(src.name)} <span class="deals-count">${current.length}</span></span>
+      <a href="${esc(src.url(DEALS))}" target="_blank" rel="noopener">alle auf ${esc(src.name)} ↗</a></h4>`;
+  html+=current.length
     ? `<div class="deals-grid">${shown.map(d=>dealCard(d,false)).join('')}</div>`
     : '<p class="muted">Aktuell keine Deals aus den letzten 6 Wochen.</p>';
   if(current.length>DEALS_VISIBLE){
-    html+=`<button class="deals-more" id="deals-more">${dealsExpanded?'Weniger Deals anzeigen ▲':`Weitere Deals (${hidden}) ▼`}</button>`;
+    html+=`<button class="deals-more" data-src="${src.key}">${expanded?'Weniger Deals anzeigen ▲':`Weitere Deals (${hidden}) ▼`}</button>`;
   }
-  if(old.length&&$('deals-expired').checked){
+  if(old.length&&showOld){
     html+=`<h4 class="deals-sub">Abgelaufen (${old.length})</h4><div class="deals-grid">${old.map(d=>dealCard(d,true)).join('')}</div>`;
   }
+  return {html:html+'</div>', old:old.length};
+}
+
+function renderDeals(){
+  if(!DEALS?.deals?.length){ $('deals').style.display='none'; return; }
+  const showOld=$('deals-expired').checked;
+  let html='', oldTotal=0;
+  for(const src of DEAL_SOURCES){
+    const deals=DEALS.deals.filter(d=>dealSource(d)===src.key);
+    if(!deals.length) continue;
+    const sec=dealSection(src, deals, showOld);
+    html+=sec.html; oldTotal+=sec.old;
+  }
   $('deals-list').innerHTML=html;
-  $('deals-expired').parentElement.lastChild.textContent=` abgelaufene zeigen (${old.length})`;
-  $('deals-expired').parentElement.style.display=old.length?'':'none';
+  $('deals-expired').parentElement.lastChild.textContent=` abgelaufene zeigen (${oldTotal})`;
+  $('deals-expired').parentElement.style.display=oldTotal?'':'none';
 
   const upd=DEALS.updated?isoToDE(DEALS.updated.slice(0,10)):'';
   $('deals-foot').innerHTML=`<span>Quellen: Secret Flying, Fly4free.pl · täglich aktualisiert${upd?` · Stand ${esc(upd)}`:''}${DEALS.stale?' (Quelle zuletzt nicht erreichbar)':''} · älter als 6 Wochen = abgelaufen</span>
-    <span><a href="${esc(DEALS.searchUrl||'https://www.secretflying.com/')}" target="_blank" rel="noopener">Secret Flying ↗</a> · <a href="https://www.fly4free.pl/tanie-loty/z-warszawy/" target="_blank" rel="noopener">Fly4free.pl ↗</a></span>`;
+`;
   $('deals').style.display='block';
 }
 
@@ -1975,7 +2002,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if(st.user) showUser(st.user);
   $('deals-expired').addEventListener('change', renderDeals);
   $('deals-list').addEventListener('click',e=>{
-    if(e.target.closest('#deals-more')){ dealsExpanded=!dealsExpanded; renderDeals(); }
+    const more=e.target.closest('.deals-more');
+    if(more){
+      const key=more.dataset.src;
+      dealsExpanded[key]=!dealsExpanded[key];
+      renderDeals();
+      if(!dealsExpanded[key]) $('deals-'+key)?.scrollIntoView({block:'nearest'});
+    }
   });
   loadDeals();
   $('warn-proxy').style.display='none';
